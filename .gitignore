@@ -1,0 +1,7 @@
+config.php
+install.lock
+data/*
+!data/.htaccess
+assets/uploads/*
+!assets/uploads/.htaccess
+!assets/uploads/.gitkeep

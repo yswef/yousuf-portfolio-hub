@@ -1,0 +1,29 @@
+Options -Indexes
+DirectoryIndex index.php
+AddDefaultCharset UTF-8
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+# force HTTPS (enable SSL in hPanel first)
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTP_HOST} !^localhost [NC]
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# private folders / files
+RewriteRule ^(core|app|data|lang|docs)(/|$) - [F,L]
+RewriteRule ^admin/(core|modules)(/|$) - [F,L]
+RewriteRule ^(config\.php|config\.sample\.php|cron_sync\.php|cron_backup\.php|install\.lock)$ - [F,L]
+# admin has its own index.php; everything else that is not a real file goes to the router
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+<FilesMatch "\.(woff2|css|js|svg|jpg|png|ico)$">
+  Header set Cache-Control "public, max-age=2592000"
+</FilesMatch>
+</IfModule>
+<IfModule mod_deflate.c>
+AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml application/xml application/json
+</IfModule>
