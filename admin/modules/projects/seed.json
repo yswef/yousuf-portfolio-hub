@@ -1,0 +1,59 @@
+[
+ {
+  "name": "MailboxSplitter",
+  "language": "Python",
+  "image": "seed-p1.jpg",
+  "title": {
+   "ar": "MailboxSplitter",
+   "en": "MailboxSplitter",
+   "es": "MailboxSplitter",
+   "fr": "MailboxSplitter",
+   "ja": "MailboxSplitter"
+  },
+  "desc": {
+   "ar": "أداة كونسول بلغة بايثون تعالج وتنظم ملفات .inbox، وتقسّم البريد إلى ملفات مصنّفة حسب المرسل أو الموضوع أو التاريخ.",
+   "en": "A Python console app that processes and organizes .inbox files, splitting mail into categorized files by sender, subject, or date.",
+   "es": "Aplicación de consola en Python que organiza archivos .inbox, dividiendo el correo por remitente, asunto o fecha.",
+   "fr": "Application console Python qui organise les fichiers .inbox par expéditeur, sujet ou date.",
+   "ja": "送信者、件名、日付でメールボックスを整理するPythonコンソールアプリ。"
+  }
+ },
+ {
+  "name": "Task Management App",
+  "language": "Python",
+  "image": "seed-p2.jpg",
+  "title": {
+   "ar": "تطبيق إدارة المهام والإنتاجية",
+   "en": "Task Management App",
+   "es": "Gestión de Tareas",
+   "fr": "Gestion des Tâches",
+   "ja": "タスク管理アプリ"
+  },
+  "desc": {
+   "ar": "تطبيق كونسول لإدارة المهام وتتبع الوقت وزيادة الإنتاجية، بميزات مثل مؤقت بومودورو وتقارير الإنتاجية.",
+   "en": "A console app for task management, time tracking, and productivity, with a Pomodoro timer and productivity reports.",
+   "es": "Aplicación de consola para gestión de tareas y productividad, con temporizador Pomodoro.",
+   "fr": "Application console pour la gestion des tâches et la productivité, avec minuteur Pomodoro.",
+   "ja": "タスク管理と生産性向上のためのコンソールアプリ。ポモドーロタイマー付き。"
+  }
+ },
+ {
+  "name": "PassSafe",
+  "language": "Python",
+  "image": "seed-p3.jpg",
+  "title": {
+   "ar": "PassSafe",
+   "en": "PassSafe",
+   "es": "PassSafe",
+   "fr": "PassSafe",
+   "ja": "PassSafe"
+  },
+  "desc": {
+   "ar": "أداة تفحص قوة كلمات المرور وتساعدك على إنشاء كلمات مرور آمنة بسهولة مع ملاحظات فورية.",
+   "en": "A tool that checks password strength and helps you create secure passwords with instant feedback.",
+   "es": "Herramienta que verifica la seguridad de tus contraseñas.",
+   "fr": "Outil qui vérifie la sécurité de vos mots de passe.",
+   "ja": "パスワードの強度をチェックするツール。"
+  }
+ }
+]

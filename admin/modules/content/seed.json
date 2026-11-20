@@ -1,0 +1,524 @@
+[
+ {
+  "type": "service",
+  "title": {
+   "ar": "تطوير أنظمة بايثون",
+   "en": "Python Systems Development",
+   "es": "Desarrollo en Python",
+   "fr": "Développement Python",
+   "ja": "Pythonシステム開発"
+  },
+  "sub": {},
+  "text": {
+   "ar": "بناء أدوات وتطبيقات كونسول أو سطح مكتب مخصصة بلغة Python وفق مبادئ الكود النظيف.",
+   "en": "Building custom console tools and desktop apps in Python following clean-code principles.",
+   "es": "Construcción de herramientas y aplicaciones personalizadas en Python.",
+   "fr": "Création d'outils et d'applications personnalisés en Python.",
+   "ja": "クリーンコードの原則に従ったPythonツール・アプリの構築。"
+  },
+  "extra": "",
+  "icon": "🐍",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 1
+ },
+ {
+  "type": "service",
+  "title": {
+   "ar": "مواقع ووردبريس",
+   "en": "WordPress Websites",
+   "es": "Sitios WordPress",
+   "fr": "Sites WordPress",
+   "ja": "WordPressサイト"
+  },
+  "sub": {},
+  "text": {
+   "ar": "تصميم وتخصيص مواقع WordPress متكاملة، من الصفحة الشخصية إلى المتجر الإلكتروني.",
+   "en": "Designing and customizing complete WordPress sites, from a personal page to an online store.",
+   "es": "Diseño y personalización de sitios WordPress completos.",
+   "fr": "Conception et personnalisation de sites WordPress complets.",
+   "ja": "WordPressサイトの設計とカスタマイズ。"
+  },
+  "extra": "",
+  "icon": "📝",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 2
+ },
+ {
+  "type": "service",
+  "title": {
+   "ar": "أنظمة ERP",
+   "en": "ERP Systems",
+   "es": "Sistemas ERP",
+   "fr": "Systèmes ERP",
+   "ja": "ERPシステム"
+  },
+  "sub": {},
+  "text": {
+   "ar": "تخصيص وتطوير وحدات في أنظمة تخطيط موارد المؤسسات حسب الاحتياج.",
+   "en": "Customizing and developing modules within ERP systems based on an organization's needs.",
+   "es": "Personalización de módulos ERP según las necesidades.",
+   "fr": "Personnalisation de modules ERP selon les besoins.",
+   "ja": "ニーズに応じたERPモジュールのカスタマイズ。"
+  },
+  "extra": "",
+  "icon": "🏢",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 3
+ },
+ {
+  "type": "service",
+  "title": {
+   "ar": "تطوير الويب",
+   "en": "Web development"
+  },
+  "sub": {},
+  "text": {
+   "ar": "بناء مواقع وصفحات هبوط ولوحات بسيطة تعمل بسرعة على الجوال.",
+   "en": "Websites, landing pages and small dashboards that behave well on phones."
+  },
+  "extra": "",
+  "icon": "🌐",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 4
+ },
+ {
+  "type": "service",
+  "title": {
+   "ar": "أتمتة المهام",
+   "en": "Task automation"
+  },
+  "sub": {},
+  "text": {
+   "ar": "سكربتات وأدوات تُنجز الأعمال المتكررة: تجميع البيانات، التقارير، والمهام المجدولة.",
+   "en": "Scripts and tools for repetitive work: data collection, reports and scheduled jobs."
+  },
+  "extra": "",
+  "icon": "⚙️",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 5
+ },
+ {
+  "type": "service",
+  "title": {
+   "ar": "تطبيقات سطح مكتب (Windows)",
+   "en": "Windows desktop applications"
+  },
+  "sub": {},
+  "text": {
+   "ar": "تطبيقات ويندوز مستقلة تُثبَّت أو تعمل مباشرة، مع ملفات تنزيل وإصدارات.",
+   "en": "Standalone Windows applications, installable or portable, with release files."
+  },
+  "extra": "",
+  "icon": "🖥️",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 6
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "Python",
+   "en": "Python"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "🐍",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 1
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "WordPress",
+   "en": "WordPress"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "📝",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 2
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "ERP / ERPNext",
+   "en": "ERP / ERPNext"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "🏢",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 3
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "HTML / CSS",
+   "en": "HTML / CSS"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "🌐",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 4
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "JavaScript",
+   "en": "JavaScript"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "⚡",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 5
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "PHP",
+   "en": "PHP"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "🐘",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 6
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "SQL (MySQL / SQLite)",
+   "en": "SQL (MySQL / SQLite)"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "🗄️",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 7
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "Git",
+   "en": "Git"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "🔧",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 8
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "Windows desktop apps",
+   "en": "Windows desktop apps"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "🖥️",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 9
+ },
+ {
+  "type": "skill",
+  "title": {
+   "ar": "Task automation",
+   "en": "Task automation"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "⚙️",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 10
+ },
+ {
+  "type": "learning",
+  "title": {
+   "ar": "تطوير تطبيقات الموبايل",
+   "en": "Mobile application development"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 1
+ },
+ {
+  "type": "learning",
+  "title": {
+   "ar": "الأمن السيبراني",
+   "en": "Cybersecurity"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 2
+ },
+ {
+  "type": "experience",
+  "title": {
+   "ar": "أعمل حالياً في مطعم حنيذ",
+   "en": "Currently working at Haneeth Restaurant"
+  },
+  "sub": {
+   "ar": "مطعم حنيذ",
+   "en": "Haneeth Restaurant"
+  },
+  "text": {},
+  "extra": "",
+  "icon": "",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 1,
+  "sort_order": 1
+ },
+ {
+  "type": "experience",
+  "title": {
+   "ar": "مطوّر برمجيات",
+   "en": "Software developer"
+  },
+  "sub": {},
+  "text": {
+   "ar": "عملت مطوّراً في شركة ناشئة.",
+   "en": "Worked as a developer in a startup."
+  },
+  "extra": "",
+  "icon": "",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 2
+ },
+ {
+  "type": "education",
+  "title": {
+   "ar": "دبلوم محاسبة",
+   "en": "Diploma in accounting"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 1
+ },
+ {
+  "type": "education",
+  "title": {
+   "ar": "دبلوم سكرتارية",
+   "en": "Diploma in secretarial studies"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 2
+ },
+ {
+  "type": "education",
+  "title": {
+   "ar": "الرخصة الدولية لقيادة الحاسوب (ICDL)",
+   "en": "International Computer Driving Licence (ICDL)"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "",
+  "icon": "",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 3
+ },
+ {
+  "type": "link",
+  "title": {
+   "ar": "Facebook",
+   "en": "Facebook"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "https://www.facebook.com/profile.php?id=100085119330877",
+  "icon": "📘",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 1
+ },
+ {
+  "type": "link",
+  "title": {
+   "ar": "GitHub",
+   "en": "GitHub"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "https://github.com/yswef",
+  "icon": "💻",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 2
+ },
+ {
+  "type": "link",
+  "title": {
+   "ar": "YouTube",
+   "en": "YouTube"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "https://www.youtube.com/@animeking7343",
+  "icon": "▶️",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 3
+ },
+ {
+  "type": "link",
+  "title": {
+   "ar": "Telegram",
+   "en": "Telegram"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "https://t.me/PP_Q6",
+  "icon": "✈️",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 4
+ },
+ {
+  "type": "link",
+  "title": {
+   "ar": "WhatsApp",
+   "en": "WhatsApp"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "https://wa.me/+967780143832",
+  "icon": "💬",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 5
+ },
+ {
+  "type": "link",
+  "title": {
+   "ar": "Instagram",
+   "en": "Instagram"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "https://www.instagram.com/anme_king1090/",
+  "icon": "📷",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 6
+ },
+ {
+  "type": "link",
+  "title": {
+   "ar": "Discord",
+   "en": "Discord"
+  },
+  "sub": {},
+  "text": {},
+  "extra": "https://discord.gg/9g7uXxmw7J",
+  "icon": "🎮",
+  "level": 0,
+  "date_from": "",
+  "date_to": "",
+  "is_current": 0,
+  "sort_order": 7
+ }
+]
