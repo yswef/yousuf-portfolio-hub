@@ -1,28 +1,24 @@
 <?php
-require_once ROOT . '/core/sites.php';
-$admin = is_admin_viewer();
-$sites = table_exists('sites') ? rows('SELECT * FROM sites ORDER BY id DESC') : [];
-page_start(['title' => t('nav_docs')]);
-page_head(t('nav_docs'), t('nav_docs'), '');
+$docs = table_exists('docs') ? rows('SELECT * FROM docs WHERE hidden=0 ORDER BY sort_order, id DESC') : [];
+$projects = $docs && table_exists('projects') ? array_column(rows('SELECT slug, name, title_i18n FROM projects'), null, 'slug') : [];
+$apps = $docs && table_exists('apps') ? array_column(rows('SELECT slug, name FROM apps'), null, 'slug') : [];
+page_start(['title' => t('nav_docs'), 'desc' => t('docs_sub')]);
+page_head(t('nav_docs'), t('nav_docs'), t('docs_sub'));
 ?>
 <section><div class="container">
-<?php if (!$sites): ?><p class="muted">—</p><?php endif; ?>
+<?php if (!$docs): ?><p class="projects-empty">—</p><?php else: ?>
 <div class="grid">
-<?php foreach ($sites as $s):
-    $pages = rows('SELECT * FROM site_pages WHERE site_id=? ORDER BY sort, id', [$s['id']]);
-    $siteLocked = !(int)$s['is_public']; ?>
-  <div class="card reveal">
-    <div class="icon"><?= $siteLocked && !$admin ? '🔒' : '📘' ?></div>
-    <h3><a href="<?= e(url('s/' . $s['slug'] . '/')) ?>"><?= e($s['title']) ?></a> <?= $siteLocked ? '<span class="chip">🔒</span>' : '' ?></h3>
-    <?php if (count($pages) > 1 || ($pages && $pages[0]['title'] !== $s['title'])): ?>
-    <ul style="list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px">
-      <?php foreach ($pages as $p): $lk = $siteLocked || (int)$p['locked']; ?>
-      <li><a href="<?= e(url('s/' . $s['slug'] . '/' . $p['file'])) ?>"><?= $lk ? '🔒 ' : '' ?><?= e($p['title']) ?></a></li>
-      <?php endforeach; ?>
-    </ul>
-    <?php endif; ?>
-  </div>
+<?php foreach ($docs as $d):
+    $label = '';
+    if (!empty($d['project_slug']) && isset($projects[$d['project_slug']])) $label = tr($projects[$d['project_slug']], 'title', 'name');
+    elseif (!empty($d['app_slug']) && isset($apps[$d['app_slug']])) $label = $apps[$d['app_slug']]['name']; ?>
+  <a class="card tilt reveal" href="<?= lurl('docs/' . $d['slug']) ?>" data-search="<?= e(mb_strtolower($d['title'] . ' ' . $d['summary'] . ' ' . $label)) ?>">
+    <div class="icon">📘</div><h3><?= e($d['title']) ?></h3>
+    <?php if (trim((string)$d['summary']) !== ''): ?><p><?= e(mb_substr((string)$d['summary'], 0, 160)) ?></p><?php endif; ?>
+    <?php if ($label !== ''): ?><div class="meta"><span class="chip"><?= e($label) ?></span></div><?php endif; ?>
+  </a>
 <?php endforeach; ?>
 </div>
+<?php endif; ?>
 </div></section>
 <?php page_end(); ?>
