@@ -26,11 +26,11 @@ function site_clean_path(string $p): ?string {          // normalise an in-site 
 /** Extract a zip into $dest. Returns [files_written, skipped_names[]]. Throws on unsafe/oversized archives. */
 function site_extract_zip(string $zipFile, string $dest): array {
     $z = new ZipArchive();
-    if ($z->open($zipFile) !== true) throw new RuntimeException('الملف المضغوط تالف أو ليس zip.');
-    if ($z->numFiles > SITE_MAX_FILES) throw new RuntimeException('عدد الملفات كبير (الحد ' . SITE_MAX_FILES . ').');
+    if ($z->open($zipFile) !== true) throw new RuntimeException('The archive is corrupted or is not a zip file.');
+    if ($z->numFiles > SITE_MAX_FILES) throw new RuntimeException('Too many files in the archive (limit ' . SITE_MAX_FILES . ').');
     $names = []; $total = 0;
     for ($i = 0; $i < $z->numFiles; $i++) { $st = $z->statIndex($i); $n = (string)$st['name']; if (str_ends_with($n, '/') || str_starts_with($n, '__MACOSX/')) continue; $names[$i] = $n; $total += (int)$st['size']; }
-    if ($total > SITE_MAX_BYTES) throw new RuntimeException('الحجم بعد الفك أكبر من ' . fmt_size(SITE_MAX_BYTES) . '.');
+    if ($total > SITE_MAX_BYTES) throw new RuntimeException('Extracted size exceeds ' . fmt_size(SITE_MAX_BYTES) . '.');
     $prefix = '';                                           // a zip made from a folder has one top folder → strip it
     $tops = array_unique(array_map(fn($n) => explode('/', str_replace('\\', '/', $n))[0], $names));
     if (count($tops) === 1 && count(array_filter($names, fn($n) => str_contains(str_replace('\\', '/', $n), '/'))) === count($names)) $prefix = reset($tops) . '/';
@@ -61,12 +61,21 @@ function site_scan_pages(string $dir): array {
     ksort($out);
     return $out;
 }
-/** Adds new pages found on disk, drops rows whose file vanished. First "index.html" becomes the entry page. */
+/** Entry page of a site: index.html/index.htm first (shallowest wins), otherwise the shallowest html file. '' when the site has no html page. */
+function site_detect_entry(string $slug): string {
+    $pages = array_keys(site_scan_pages(site_dir($slug)));
+    if (!$pages) return '';
+    usort($pages, fn($a, $b) => [!preg_match('/^index\.html?$/i', basename($a)), substr_count($a, '/'), $a] <=> [!preg_match('/^index\.html?$/i', basename($b)), substr_count($b, '/'), $b]);
+    return $pages[0];
+}
+/** Adds new pages found on disk, drops rows whose file vanished. Keeps the chosen entry page while it still exists, otherwise detects one. */
 function site_sync_pages(int $siteId, string $slug): void {
     $found = site_scan_pages(site_dir($slug)); $have = [];
     foreach (rows('SELECT id, file FROM site_pages WHERE site_id=?', [$siteId]) as $r) { if (isset($found[$r['file']])) $have[$r['file']] = 1; else q('DELETE FROM site_pages WHERE id=?', [$r['id']]); }
     $n = 0;
     foreach ($found as $rel => $title) if (!isset($have[$rel])) ins('site_pages', ['site_id' => $siteId, 'file' => $rel, 'title' => $title, 'locked' => 0, 'sort' => ($rel === 'index.html' ? 0 : 10 + $n++)]);
+    $entry = (string)val('SELECT entry FROM sites WHERE id=?', [$siteId]);
+    if ($entry === '' || !isset($found[$entry])) upd('sites', ['entry' => site_detect_entry($slug)], 'id=?', [$siteId]);
 }
 /** True when the visitor holds a valid admin session (reads the admin cookie only; never creates a session for ordinary visitors). */
 function is_admin_viewer(): bool {
@@ -89,7 +98,7 @@ function site_serve(string $slug, string $path): never {
     $path = trim($path, '/');
     $page = null;
     if ($site) {
-        if ($path === '') { $e = row('SELECT file FROM site_pages WHERE site_id=? ORDER BY sort, id LIMIT 1', [$site['id']]); $path = $e['file'] ?? 'index.html'; }
+        if ($path === '') $path = ($site['entry'] ?? '') !== '' ? (string)$site['entry'] : (site_detect_entry($slug) ?: 'index.html');
         elseif (is_dir(site_dir($slug) . '/' . $path)) $path .= '/index.html';
         $page = row('SELECT * FROM site_pages WHERE site_id=? AND file=?', [$site['id'], $path]);
     }
