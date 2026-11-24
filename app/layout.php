@@ -20,7 +20,9 @@ function page_start(array $m = []): void {
     $rest = $m['rest'] ?? $REST;
     $path = fn(string $l) => site_origin() . '/' . $l . '/' . ($rest !== '' ? $rest : '');
     $dir = lang_dir();
-    $nav = ['home' => '', 'about' => 'about', 'resume' => 'resume', 'projects' => 'projects', 'apps' => 'apps', 'services' => 'services', 'blog' => 'blog', 'docs' => 'docs', 'contact' => 'contact'];
+    $nav = ['home' => '', 'about' => 'about', 'resume' => 'resume', 'projects' => 'projects', 'apps' => 'apps', 'services' => 'services'];
+    if (setting('show_blog', '0') === '1') $nav['blog'] = 'blog';       // blog tab is hidden unless enabled in Settings
+    $nav += ['library' => 'library', 'docs' => 'docs', 'contact' => 'contact'];
     $first = explode('/', $rest)[0];
     $img = !empty($m['image']) ? $m['image'] : site_origin() . '/assets/img/favicon-192.png';
     ?>
