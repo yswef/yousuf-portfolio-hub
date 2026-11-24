@@ -2,6 +2,7 @@
 $p = row('SELECT * FROM projects WHERE slug=? AND hidden=0', [$arg]);
 if (!$p) return false;
 $app = table_exists('apps') ? row('SELECT slug FROM apps WHERE project_id=? AND hidden=0 AND ignored=0', [$p['id']]) : null;
+$docsList = table_exists('docs') ? rows('SELECT slug, title FROM docs WHERE project_slug=? AND hidden=0 ORDER BY sort_order, id', [$p['slug']]) : [];
 $title = tr($p, 'title', 'name'); $desc = tr($p, 'desc', 'description');
 $ld = ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => [
   ['@type' => 'ListItem', 'position' => 1, 'name' => t('nav_projects'), 'item' => site_origin() . '/' . cur_lang() . '/projects'], ['@type' => 'ListItem', 'position' => 2, 'name' => $title]]];
@@ -24,6 +25,7 @@ $topics = array_filter(explode(',', (string)$p['topics']));
     <?php if ($u = safe_url((string)$p['homepage'])): ?><a class="btn btn-ghost" href="<?= e($u) ?>" target="_blank" rel="noopener"><?= e(t('website')) ?></a><?php endif; ?>
     <?php if ($u = safe_url((string)$p['download_url'])): ?><a class="btn btn-ghost" href="<?= e($u) ?>" target="_blank" rel="noopener"><?= e(t('download')) ?></a><?php endif; ?>
     <?php if ($app): ?><a class="btn btn-ghost" href="<?= lurl('apps/' . $app['slug']) ?>"><?= e(t('download')) ?> ⬇</a><?php endif; ?>
+    <?php foreach ($docsList as $dc): ?><a class="btn btn-ghost" href="<?= lurl('docs/' . $dc['slug']) ?>">📘 <?= e(count($docsList) > 1 ? $dc['title'] : t('nav_docs')) ?></a><?php endforeach; ?>
   </div>
   <?php if (trim((string)$p['readme']) !== ''): ?><h2><?= e(t('readme')) ?></h2><div class="prose" dir="auto"><?= md(md_clean_readme((string)$p['readme'])) ?></div><?php endif; ?>
 </article>
