@@ -41,8 +41,8 @@ try {
     $route = $parts[0] ?? 'home';
     $arg = $parts[1] ?? null;
 
-    $simple = ['docs', 'home', 'about', 'resume', 'projects', 'apps', 'services', 'learning', 'blog', 'contact', 'social', 'privacy'];
-    $detail = ['projects', 'apps', 'blog'];
+    $simple = ['docs', 'library', 'home', 'about', 'resume', 'projects', 'apps', 'services', 'learning', 'blog', 'contact', 'social', 'privacy'];
+    $detail = ['projects', 'apps', 'blog', 'docs'];
     $file = null;
     if ($known && count($parts) <= 2) {
         if ($route === 'p' && $arg !== null) $file = 'custom';
