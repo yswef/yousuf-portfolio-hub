@@ -18,4 +18,6 @@
 | sitemap + hreflang + robots + manifest + JSON-LD | portfolio / site | ✔ |
 | لوحة بنظام وحدات قابل للدمج | جديد | ✔ |
 | فحص النظام + تقرير txt + نسخة JSON | جديد | ✔ |
+| المكتبة التعليمية: بطاقة لكل موقع (zip) أو صفحة (html) تفتح الـ index، رفع عدة مواقع دفعة واحدة | جديد v1.1 | ✔ |
+| التوثيق: Markdown مرتبط بالمشاريع والتطبيقات | جديد v1.1 | ✔ |
 | مشهد Three.js ثلاثي الأبعاد، Cloudflare (D1/KV/Pages)، Turnstile، صور OG مولّدة، GitHub Actions للمزامنة | portfolio | ✘ غير مناسبة لاستضافة PHP المشتركة — استُبدلت بتأثيرات CSS وزر مزامنة |
