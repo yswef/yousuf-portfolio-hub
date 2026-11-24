@@ -2,6 +2,7 @@
 $a = row('SELECT * FROM apps WHERE slug=? AND hidden=0 AND ignored=0', [$arg]);
 if (!$a) return false;
 $files = rows('SELECT * FROM app_files WHERE app_id=? AND hidden=0 ORDER BY id', [$a['id']]);
+$docsList = table_exists('docs') ? rows('SELECT slug, title FROM docs WHERE app_slug=? AND hidden=0 ORDER BY sort_order, id', [$a['slug']]) : [];
 $proj = $a['project_id'] ? row('SELECT slug FROM projects WHERE id=?', [$a['project_id']]) : null;
 $total = array_sum(array_column($files, 'gh_count')) + (int)val('SELECT COUNT(*) FROM downloads WHERE app_id=?', [$a['id']]);
 page_start(['title' => $a['name'], 'desc' => (string)$a['description']]);
@@ -23,6 +24,7 @@ $price = t($a['price_type'] === 'paid' ? 'paid' : ($a['price_type'] === 'donatio
       <?php if (!empty($f['digest'])): ?><code class="sha" dir="ltr"><?= e(t('sha')) ?>: <?= e(preg_replace('/^sha256:/', '', $f['digest'])) ?></code><?php endif; ?></div>
       <a class="btn btn-gold" rel="nofollow" href="<?= e(url('dl/' . (int)$f['id'])) ?>"><?= e(t('download')) ?></a></div><?php endforeach; ?></div><?php endif; ?>
   <?php foreach (['requirements', 'install_notes', 'release_notes'] as $k): if (trim((string)$a[$k]) !== ''): ?><h2><?= e(t($k)) ?></h2><div class="prose" dir="auto"><?= md((string)$a[$k]) ?></div><?php endif; endforeach; ?>
+  <?php if ($docsList): ?><div class="cta"><?php foreach ($docsList as $dc): ?><a class="btn btn-ghost" href="<?= lurl('docs/' . $dc['slug']) ?>">📘 <?= e(count($docsList) > 1 ? $dc['title'] : t('nav_docs')) ?></a><?php endforeach; ?></div><?php endif; ?>
   <?php if ($proj): ?><div class="cta"><a class="btn btn-ghost" href="<?= lurl('projects/' . $proj['slug']) ?>"><?= e(t('nav_projects')) ?></a></div><?php endif; ?>
 </article>
 <?php page_end(); ?>
