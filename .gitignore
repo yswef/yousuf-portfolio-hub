@@ -5,3 +5,9 @@ data/*
 assets/uploads/*
 !assets/uploads/.htaccess
 !assets/uploads/.gitkeep
+
+# helper files (never committed)
+repo_info.md
+GIT_COMMANDS.md
+git_*.sh
+commit_helper*
