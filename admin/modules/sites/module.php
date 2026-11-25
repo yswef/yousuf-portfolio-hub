@@ -4,8 +4,8 @@ declare(strict_types=1);
 /** Identity colors copied straight from the live stylesheet (so the button never goes stale). */
 function sites_brand_css(): string {
     $css = (string)@file_get_contents(ROOT . '/assets/css/style.css');
-    $light = preg_match('/:root\s*\{(.*?)\}/s', $css, $a) ? trim($a[1]) : '--bg:#f4f1e8;--text:#1c1c24;--gold:#e8b923;--purple:#7c4dff';
-    $dark = preg_match('/html\.dark\s*\{(.*?)\}/s', $css, $b) ? trim($b[1]) : '--bg:#0a0a10;--text:#f2efe4';
+    $light = preg_match('/:root\s*\{(.*?)\}/s', $css, $a) ? trim($a[1]) : '--bg:#f4f7fa;--text:#0a1628;--accent:#0d9488;--accent2:#0284c7';
+    $dark = preg_match('/html\.dark\s*\{(.*?)\}/s', $css, $b) ? trim($b[1]) : '--bg:#050b14;--text:#e8f1f9';
     return "/* ألوان هوية الموقع — الوضع الفاتح */\n:root{" . $light . "}\n/* الوضع الداكن (أضف class=\"dark\" على html) */\nhtml.dark{" . $dark . "}\n/* الخط: Cairo */";
 }
 function sites_ascii_slug(string $t): string {
@@ -116,8 +116,30 @@ return [
         f_ta('description', 'وصف قصير يظهر في البطاقة (عند رفع ملف واحد)', '', 2, 'maxlength="1000"');
         f_chk('is_public', 'قابل للنشر للجميع (وإلا يظهر مقفلاً ولا يفتحه إلا المدير)', false);
         echo '<p class="muted hint">' . e($lim) . '</p><div class="row"><button class="btn" type="submit">رفع ونشر</button>'; sites_copy_btn(sites_brand_css(), '🎨 نسخ ألوان الهوية'); echo '</div></form></div>';
-        $sites = rows('SELECT s.*, (SELECT COUNT(*) FROM site_pages p WHERE p.site_id=s.id) AS pc FROM sites s ORDER BY s.sort, s.id DESC');
-        if (!$sites) { echo '<div class="panel"><p class="muted">لا مواقع بعد.</p></div>'; return; }
+
+        $q = trim((string)($_GET['q'] ?? ''));
+        $pub = (string)($_GET['pub'] ?? '');
+        $kind = (string)($_GET['kind'] ?? '');
+        $sortOpts = ['custom' => ['الترتيب المخصّص', 's.sort ASC, s.id DESC'], 'newest' => ['الأحدث', 's.id DESC'], 'oldest' => ['الأقدم', 's.id ASC'], 'pages' => ['الأكثر صفحات', 'pc DESC, s.id DESC'], 'alpha' => ['أبجدياً', 's.title ASC']];
+        $sort = array_key_exists((string)($_GET['sort'] ?? ''), $sortOpts) ? (string)$_GET['sort'] : 'custom';
+        $where = '1=1'; $p = [];
+        if ($q !== '') { $where .= ' AND (s.title LIKE ? OR s.slug LIKE ? OR s.description LIKE ?)'; $p = array_merge($p, ['%' . $q . '%', '%' . $q . '%', '%' . $q . '%']); }
+        if ($pub === '1' || $pub === '0') { $where .= ' AND s.is_public=?'; $p[] = (int)$pub; }
+        if ($kind === 'site' || $kind === 'page') { $where .= ' AND s.kind=?'; $p[] = $kind; }
+        $orderBy = $sortOpts[$sort][1];
+
+        echo '<form method="get" class="filter-bar"><input type="hidden" name="m" value="sites">'
+           . '<input type="search" name="q" value="' . e($q) . '" placeholder="🔎 بحث بالاسم أو الوصف أو الرابط…">'
+           . '<select name="pub" onchange="this.form.submit()"><option value="">الخصوصية: الكل</option><option value="1"' . ($pub === '1' ? ' selected' : '') . '>🌐 عام</option><option value="0"' . ($pub === '0' ? ' selected' : '') . '>🔒 خاص</option></select>'
+           . '<select name="kind" onchange="this.form.submit()"><option value="">النوع: الكل</option><option value="site"' . ($kind === 'site' ? ' selected' : '') . '>📘 موقع كامل</option><option value="page"' . ($kind === 'page' ? ' selected' : '') . '>📄 صفحة منفردة</option></select>'
+           . '<select name="sort" onchange="this.form.submit()">';
+        foreach ($sortOpts as $sk => $sv) echo '<option value="' . $sk . '"' . ($sort === $sk ? ' selected' : '') . '>الترتيب: ' . e($sv[0]) . '</option>';
+        echo '</select><button class="btn ghost sm" type="submit">تصفية</button>';
+        if ($q !== '' || $pub !== '' || $kind !== '' || $sort !== 'custom') echo '<a class="btn ghost sm" href="' . e(adm_url('sites')) . '">إعادة تعيين</a>';
+        echo '</form>';
+
+        $sites = rows("SELECT s.*, (SELECT COUNT(*) FROM site_pages pg WHERE pg.site_id=s.id) AS pc FROM sites s WHERE $where ORDER BY $orderBy", $p);
+        if (!$sites) { echo '<div class="panel"><p class="muted">لا مواقع مطابقة.</p></div>'; return; }
         echo '<div class="panel tw"><table><thead><tr><th>الموقع</th><th>الحالة</th><th>الصفحات</th><th></th></tr></thead><tbody>';
         foreach ($sites as $s) {
             $u = site_origin() . '/s/' . $s['slug'] . '/';

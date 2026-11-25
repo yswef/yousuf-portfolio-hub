@@ -22,10 +22,17 @@ return crud_module([
     ],
     'list' => [
         'order' => 'id DESC',
+        'filter' => 'lang',
+        'sorts' => [
+            'default' => ['الأحدث نشراً', 'id DESC'],
+            'views' => ['الأكثر مشاهدة', 'views DESC, id DESC'],
+            'oldest' => ['الأقدم', 'id ASC'],
+            'alpha' => ['أبجدياً', 'title ASC'],
+        ],
         'columns' => [
             ['label' => 'العنوان', 'fmt' => fn($r) => '<b>' . e($r['title']) . '</b>'],
             ['label' => 'اللغة', 'fmt' => fn($r) => e(strtoupper($r['lang']))],
-            ['label' => 'الحالة', 'fmt' => fn($r) => $r['published'] ? '✓ منشور' : 'مسودة'],
+            ['label' => 'الحالة', 'fmt' => fn($r) => $r['published'] ? '<span class="chip ok">منشور</span>' : '<span class="chip">مسودة</span>'],
             ['label' => 'المشاهدات', 'fmt' => fn($r) => (string)(int)$r['views']],
             ['label' => 'التاريخ', 'fmt' => fn($r) => e(fmt_date($r['created']))],
         ],

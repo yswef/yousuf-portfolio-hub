@@ -30,12 +30,29 @@ return [
     },
     'view' => function (array $mod): void {
         $f = array_key_exists((string)($_GET['s'] ?? 'new'), MSG_STATUS) || ($_GET['s'] ?? '') === 'all' ? (string)($_GET['s'] ?? 'new') : 'new';
+        $q = trim((string)($_GET['q'] ?? ''));
+        $sort = ($_GET['sort'] ?? 'newest') === 'oldest' ? 'oldest' : 'newest';
         adm_h('الرسائل');
-        echo '<div class="row" style="margin-bottom:14px">';
-        foreach (['all' => 'الكل'] + MSG_STATUS as $k => $n) echo '<a class="btn sm ' . ($k === $f ? '' : 'ghost') . '" href="' . adm_url('messages', ['s' => $k]) . '">' . e($n) . '</a>';
-        echo '<a class="btn ghost sm" href="' . adm_url('messages', ['dl' => 'csv']) . '">تصدير CSV</a></div>';
-        $list = $f === 'all' ? rows('SELECT * FROM messages ORDER BY id DESC LIMIT 300') : rows('SELECT * FROM messages WHERE status=? ORDER BY id DESC LIMIT 300', [$f]);
-        if (!$list) { echo '<div class="panel"><p class="muted">لا رسائل.</p></div>'; return; }
+        echo '<div class="row" style="margin-bottom:12px">';
+        foreach (['all' => 'الكل'] + MSG_STATUS as $k => $n) echo '<a class="btn sm ' . ($k === $f ? '' : 'ghost') . '" href="' . adm_url('messages', ['s' => $k] + ($q !== '' ? ['q' => $q] : [])) . '">' . e($n) . '</a>';
+        echo '<a class="btn ghost sm" href="' . adm_url('messages', ['dl' => 'csv']) . '">⬇ تصدير CSV</a></div>';
+
+        echo '<form method="get" class="filter-bar"><input type="hidden" name="m" value="messages"><input type="hidden" name="s" value="' . e($f) . '">'
+           . '<input type="search" name="q" value="' . e($q) . '" placeholder="🔎 بحث بالاسم أو البريد أو الموضوع أو النص…">'
+           . '<select name="sort" onchange="this.form.submit()"><option value="newest"' . ($sort === 'newest' ? ' selected' : '') . '>الترتيب: الأحدث</option><option value="oldest"' . ($sort === 'oldest' ? ' selected' : '') . '>الترتيب: الأقدم</option></select>'
+           . '<button class="btn ghost sm" type="submit">تصفية</button>'
+           . (($q !== '' || $sort !== 'newest') ? '<a class="btn ghost sm" href="' . e(adm_url('messages', ['s' => $f])) . '">إعادة تعيين</a>' : '')
+           . '</form>';
+
+        $where = $f === 'all' ? '1=1' : 'status=?';
+        $p = $f === 'all' ? [] : [$f];
+        if ($q !== '') {
+            $where .= ' AND (name LIKE ? OR email LIKE ? OR subject LIKE ? OR body LIKE ? OR company LIKE ?)';
+            $p = array_merge($p, ['%' . $q . '%', '%' . $q . '%', '%' . $q . '%', '%' . $q . '%', '%' . $q . '%']);
+        }
+        $orderBy = $sort === 'oldest' ? 'id ASC' : 'id DESC';
+        $list = rows("SELECT * FROM messages WHERE $where ORDER BY $orderBy LIMIT 300", $p);
+        if (!$list) { echo '<div class="panel"><p class="muted">لا رسائل مطابقة.</p></div>'; return; }
         foreach ($list as $m) {
             echo '<details class="panel msg"' . ($m['status'] === 'new' ? ' open' : '') . '><summary><b>' . e($m['subject'] ?: $m['name']) . '</b> <span class="muted">— ' . e($m['name']) . ' · ' . e(ts_fmt($m['ts'])) . '</span> <span class="chip">' . e(MSG_STATUS[$m['status']] ?? $m['status']) . '</span></summary>';
             echo '<p dir="ltr"><a href="mailto:' . e($m['email']) . '">' . e($m['email']) . '</a>' . ($m['phone'] ? ' · ' . e($m['phone']) : '') . '</p>';

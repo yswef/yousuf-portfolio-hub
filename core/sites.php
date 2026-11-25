@@ -87,9 +87,9 @@ function site_lock_page(string $slug, string $path): never {
     http_response_code(403); header('Content-Type: text/html; charset=utf-8'); header('Cache-Control: no-store'); header('X-Robots-Tag: noindex');
     $next = rawurlencode(url('s/' . $slug . '/' . $path));
     echo '<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>🔒</title>'
-       . '<body style="font-family:system-ui,Tahoma,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#0a0a10;color:#f2efe4;text-align:center"><div><div style="font-size:64px">🔒</div>'
-       . '<h2>هذه الصفحة خاصة</h2><p style="color:#a9a6b5">تظهر للمدير فقط بعد تسجيل الدخول.</p>'
-       . '<a href="' . e(url('admin/') . '?next=' . $next) . '" style="display:inline-block;margin-top:8px;padding:10px 26px;border-radius:99px;background:#e8b923;color:#111;font-weight:700;text-decoration:none">تسجيل الدخول</a></div></body></html>';
+       . '<body style="font-family:system-ui,Tahoma,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#050b14;color:#e8f1f9;text-align:center"><div><div style="font-size:64px">🔒</div>'
+       . '<h2>هذه الصفحة خاصة</h2><p style="color:#8fa9c3">تظهر للمدير فقط بعد تسجيل الدخول.</p>'
+       . '<a href="' . e(url('admin/') . '?next=' . $next) . '" style="display:inline-block;margin-top:8px;padding:10px 26px;border-radius:12px;background:#2dd4bf;color:#04121a;font-weight:700;text-decoration:none">تسجيل الدخول</a></div></body></html>';
     exit;
 }
 /** Serves /s/<slug>/<path>. Private site, or a locked page → admin session required. */

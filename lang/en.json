@@ -142,5 +142,14 @@
  "privacy_title": "Privacy policy",
  "privacy_body": "No tracking cookies and no third-party analytics are used.\n\nWe keep aggregated, anonymous visit stats: IP addresses are not stored, and the visitor id is a hash whose salt changes daily, so visits cannot be linked across days.\n\nMessages sent through the contact form are stored only to reply to you.",
  "badge_available": "Available for work",
- "hero_hello_name": "Hi, I'm"
+ "hero_hello_name": "Hi, I'm",
+ "sort_by": "Sort by",
+ "sort_featured": "Featured & custom",
+ "sort_stars": "Most stars ★",
+ "sort_updated": "Recently updated",
+ "sort_newest": "Newest",
+ "sort_oldest": "Oldest",
+ "sort_downloads": "Most downloaded",
+ "sort_name": "Alphabetical",
+ "filter_all": "All"
 }

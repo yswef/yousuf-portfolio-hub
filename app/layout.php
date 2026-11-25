@@ -41,11 +41,11 @@ function page_start(array $m = []): void {
 <?php if ($v = setting('bing_verify')): ?><meta name="msvalidate.01" content="<?= e($v) ?>"><?php endif; ?>
 <meta property="og:title" content="<?= e($title) ?>"><meta property="og:description" content="<?= e($desc) ?>">
 <meta property="og:type" content="<?= e($m['type'] ?? 'website') ?>"><meta property="og:url" content="<?= e($path(cur_lang())) ?>"><meta property="og:image" content="<?= e($img) ?>">
-<meta name="twitter:card" content="summary"><meta name="theme-color" content="#0a0a10">
+<meta name="twitter:card" content="summary"><meta name="theme-color" content="#050b14">
 <meta name="theme-default" content="<?= e(setting('theme_default', 'system')) ?>">
 <link rel="icon" href="<?= url('assets/img/favicon.ico') ?>"><link rel="icon" type="image/png" sizes="32x32" href="<?= url('assets/img/favicon-32.png') ?>">
 <link rel="apple-touch-icon" href="<?= url('assets/img/favicon-192.png') ?>"><link rel="manifest" href="<?= url('manifest.webmanifest') ?>">
-<link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('assets/css/style.css') ?>?v=2">
+<link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('assets/css/style.css') ?>?v=3">
 <script src="<?= url('assets/js/theme.js') ?>"></script>
 <?php if (!empty($m['jsonld'])): ?><script type="application/ld+json"><?= json_encode($m['jsonld'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script><?php endif; ?>
 </head>
@@ -83,7 +83,7 @@ function page_end(): void {
     <?php foreach (LANGS as $l => $inf): if ($l === cur_lang()) continue; ?><a hreflang="<?= $l ?>" href="<?= e(lurl($GLOBALS['REST'] ?? '', $l)) ?>"><?= e($inf['name']) ?></a><?php endforeach; ?></div>
   <p>© <?= gmdate('Y') ?> <?= e(setting_l('name')) ?> · <?= e(t('rights')) ?> · <?= e(t('no_tracking')) ?></p>
 </footer>
-<script src="<?= url('assets/js/app.js') ?>?v=2" defer></script>
+<script src="<?= url('assets/js/app.js') ?>?v=3" defer></script>
 </body>
 </html>
 <?php

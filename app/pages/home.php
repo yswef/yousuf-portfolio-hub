@@ -2,8 +2,10 @@
 $nProj = (int)val('SELECT COUNT(*) FROM projects WHERE hidden=0');
 $nApps = (int)val('SELECT COUNT(*) FROM apps WHERE hidden=0 AND ignored=0');
 $dl = (int)val('SELECT COALESCE(SUM(f.gh_count),0) FROM app_files f JOIN apps a ON a.id=f.app_id WHERE a.hidden=0 AND a.ignored=0 AND f.hidden=0') + (int)val('SELECT COUNT(*) FROM downloads');
-$featured = rows('SELECT * FROM projects WHERE hidden=0 AND featured=1 ORDER BY sort_order, stars DESC LIMIT 6') ?: rows('SELECT * FROM projects WHERE hidden=0 ORDER BY stars DESC, id DESC LIMIT 6');
-$apps = rows('SELECT * FROM apps WHERE hidden=0 AND ignored=0 ORDER BY id DESC LIMIT 3');
+$projOrder = projects_order_sql();
+$appOrder = apps_order_sql();
+$featured = rows("SELECT * FROM projects WHERE hidden=0 AND featured=1 ORDER BY $projOrder LIMIT 6") ?: rows("SELECT * FROM projects WHERE hidden=0 ORDER BY $projOrder LIMIT 6");
+$apps = rows("SELECT a.*, ((SELECT COALESCE(SUM(gh_count),0) FROM app_files f WHERE f.app_id=a.id AND f.hidden=0) + (SELECT COUNT(*) FROM downloads d WHERE d.app_id=a.id)) AS dl_total FROM apps a WHERE a.hidden=0 AND a.ignored=0 ORDER BY $appOrder LIMIT 3");
 $name = setting_l('name'); $bd = setting('birthdate');
 $ld = ['@context' => 'https://schema.org', '@type' => 'Person', 'name' => $name, 'jobTitle' => setting_l('title'), 'url' => site_origin() . '/' . cur_lang() . '/', 'sameAs' => array_values(array_filter(array_map(fn($l) => safe_url((string)$l['extra']), items('link'))))];
 page_start(['title' => '', 'jsonld' => $ld]);

@@ -45,8 +45,22 @@ return [
         } else { echo '<p class="muted">غير مفعّل.</p>'; f_open('security', '2fa_start'); echo '<button class="btn" type="submit">ابدأ التفعيل</button></form>'; }
         echo '</div>';
 
-        echo '<div class="panel"><h2>سجل التدقيق (آخر 30)</h2><div class="tw"><table>';
-        foreach (rows('SELECT * FROM audit_log ORDER BY id DESC LIMIT 30') as $l) echo '<tr><td>' . e(ts_fmt($l['ts'])) . '</td><td>' . e($l['admin']) . '</td><td dir="ltr">' . e($l['action']) . '</td><td dir="ltr">' . e($l['detail']) . '</td></tr>';
-        echo '</table></div></div>';
+        $q = trim((string)($_GET['q'] ?? ''));
+        $act = trim((string)($_GET['act'] ?? ''));
+        $actions = array_values(array_filter(array_column(rows('SELECT DISTINCT action FROM audit_log ORDER BY action'), 'action')));
+        $where = '1=1'; $p = [];
+        if ($q !== '') { $where .= ' AND (admin LIKE ? OR action LIKE ? OR detail LIKE ?)'; $p = ['%' . $q . '%', '%' . $q . '%', '%' . $q . '%']; }
+        if ($act !== '') { $where .= ' AND action=?'; $p[] = $act; }
+
+        echo '<div class="panel"><h2>سجل التدقيق</h2>';
+        echo '<form method="get" class="filter-bar"><input type="hidden" name="m" value="security">'
+           . '<input type="search" name="q" value="' . e($q) . '" placeholder="🔎 بحث في السجل…">'
+           . '<select name="act" onchange="this.form.submit()"><option value="">كل العمليات</option>';
+        foreach ($actions as $ac) echo '<option value="' . e($ac) . '"' . ($act === $ac ? ' selected' : '') . '>' . e($ac) . '</option>';
+        echo '</select><button class="btn ghost sm" type="submit">تصفية</button>'
+           . (($q !== '' || $act !== '') ? '<a class="btn ghost sm" href="' . e(adm_url('security')) . '">إعادة تعيين</a>' : '')
+           . '</form><div class="tw"><table><thead><tr><th>التاريخ</th><th>المدير</th><th>العملية</th><th>التفاصيل</th></tr></thead><tbody>';
+        foreach (rows("SELECT * FROM audit_log WHERE $where ORDER BY id DESC LIMIT 100", $p) as $l) echo '<tr><td>' . e(ts_fmt($l['ts'])) . '</td><td>' . e($l['admin']) . '</td><td dir="ltr"><code>' . e($l['action']) . '</code></td><td dir="auto">' . e((string)$l['detail']) . '</td></tr>';
+        echo '</tbody></table></div></div>';
     },
 ];

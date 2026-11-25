@@ -52,8 +52,23 @@ return [
         adm_h('فحص النظام والنسخ الاحتياطي', 'عند ظهور أي خطأ: نزّل تقرير الفحص وأرسله لمن يساعدك — لا يحتوي كلمات مرور ولا مفاتيح.');
         echo '<div class="row" style="margin-bottom:14px"><a class="btn" href="' . adm_url('health', ['dl' => 'report']) . '">⬇ تقرير الفحص (txt)</a><a class="btn ghost" href="' . adm_url('health', ['dl' => 'backup']) . '">⬇ نسخة احتياطية للمحتوى (JSON)</a>';
         btn_post('health', 'test_github', [], 'اختبار الاتصال بـ GitHub'); btn_post('health', 'clear_log', [], 'تفريغ سجل الأخطاء', 'btn ghost sm', 'تفريغ السجل؟'); echo '</div>';
+
+        $q = trim((string)($_GET['q'] ?? ''));
+        $st = (string)($_GET['st'] ?? '');
+        echo '<form method="get" class="filter-bar"><input type="hidden" name="m" value="health">'
+           . '<input type="search" name="q" value="' . e($q) . '" placeholder="🔎 بحث في عناصر الفحص…">'
+           . '<select name="st" onchange="this.form.submit()"><option value="">الحالة: الكل</option><option value="ok"' . ($st === 'ok' ? ' selected' : '') . '>✅ سليم فقط</option><option value="fail"' . ($st === 'fail' ? ' selected' : '') . '>⚠️ يحتاج انتباه</option></select>'
+           . '<button class="btn ghost sm" type="submit">تصفية</button>'
+           . (($q !== '' || $st !== '') ? '<a class="btn ghost sm" href="' . e(adm_url('health')) . '">إعادة تعيين</a>' : '')
+           . '</form>';
+
         echo '<div class="panel tw"><table><thead><tr><th></th><th>الفحص</th><th>التفاصيل</th></tr></thead><tbody>';
-        foreach (health_checks() as [$n, $ok, $d]) echo '<tr><td>' . ($ok ? '✅' : '⚠️') . '</td><td>' . e($n) . '</td><td dir="auto">' . e($d) . '</td></tr>';
+        foreach (health_checks() as [$n, $ok, $d]) {
+            if ($st === 'ok' && !$ok) continue;
+            if ($st === 'fail' && $ok) continue;
+            if ($q !== '' && mb_stripos($n . ' ' . $d, $q) === false) continue;
+            echo '<tr><td>' . ($ok ? '✅' : '⚠️') . '</td><td>' . e($n) . '</td><td dir="auto">' . e($d) . '</td></tr>';
+        }
         echo '</tbody></table></div><p class="muted">النسخة الاحتياطية تشمل المحتوى والإعدادات (بلا حسابات المدير ولا الزيارات). صور المشاريع في <code dir="ltr">assets/uploads/</code> تُنسخ يدوياً من مدير الملفات.</p>';
     },
 ];

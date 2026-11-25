@@ -2,6 +2,15 @@
 declare(strict_types=1);
 require_once __DIR__ . '/github.php';
 
+const PROJ_PUBLIC_SORTS = [
+    'custom' => 'المميّز والترتيب المخصّص أولاً',
+    'stars' => 'الأكثر نجوماً على GitHub ★',
+    'updated' => 'الأحدث تحديثاً (آخر دفع على GitHub)',
+    'newest' => 'الأحدث إضافةً للموقع',
+    'oldest' => 'الأقدم إضافةً',
+    'name' => 'أبجدياً حسب الاسم',
+];
+
 return crud_module([
     'title' => ['ar' => 'المشاريع', 'en' => 'Projects'], 'icon' => '▣', 'group' => 'content', 'order' => 20, 'version' => 1,
     'table' => 'projects', 'one' => 'مشروع', 'new_label' => 'مشروع جديد (يدوي)',
@@ -34,10 +43,10 @@ return crud_module([
     ],
     'fields' => [
         'name' => ['t' => 'text', 'label' => 'الاسم (يُستخدم للرابط)', 'req' => true],
-        'title_i18n' => ['t' => 'i18n', 'label' => 'العنوان (ترجمات اختيارية)'],
+        'title_i18n' => ['t' => 'i18n', 'label' => 'العنوان'],
         'slug' => ['t' => 'slug', 'label' => 'الرابط المختصر', 'from' => 'name'],
         'description' => ['t' => 'textarea', 'label' => 'الوصف الافتراضي (يُملأ من GitHub للمشاريع المزامنة)', 'rows' => 3, 'max' => 1000],
-        'desc_i18n' => ['t' => 'i18n_area', 'label' => 'ترجمات الوصف', 'rows' => 3, 'max' => 1000],
+        'desc_i18n' => ['t' => 'i18n_area', 'label' => 'وصف المشروع المترجم', 'rows' => 3, 'max' => 1000],
         'image' => ['t' => 'image', 'label' => 'صورة المشروع'],
         'language' => ['t' => 'text', 'label' => 'اللغة / التقنية', 'max' => 60],
         'topics' => ['t' => 'text', 'label' => 'الوسوم (مفصولة بفاصلة)'],
@@ -49,34 +58,62 @@ return crud_module([
         'featured' => ['t' => 'check', 'label' => 'مميّز (يظهر في الرئيسية)'],
         'hidden' => ['t' => 'check', 'label' => 'مخفي عن الزوار'],
         'locked' => ['t' => 'check', 'label' => 'مقفل (لا تعدّله المزامنة)'],
-        'sort_order' => ['t' => 'num', 'label' => 'الترتيب'],
+        'sort_order' => ['t' => 'num', 'label' => 'رقم الترتيب اليدوي'],
         'created' => ['t' => 'ts_created'], 'updated' => ['t' => 'ts_updated'],
     ],
+    'before_save' => function (array &$d, ?array $old): void {
+        if (trim((string)($d['desc_i18n'] ?? '')) === '' && preg_match('/\p{Arabic}/u', (string)($d['description'] ?? ''))) {
+            $d['desc_i18n'] = json_encode(i18n_auto_fill(['ar' => (string)$d['description']]), JSON_UNESCAPED_UNICODE);
+        }
+    },
     'list' => [
         'order' => 'sort_order, id DESC',
+        'sorts' => [
+            'default' => ['الترتيب المخصّص والمميّز', 'featured DESC, sort_order ASC, id DESC'],
+            'stars' => ['الأكثر نجوماً ★', 'stars DESC, id DESC'],
+            'forks' => ['الأكثر تفرّعاً (Forks)', 'forks DESC, id DESC'],
+            'pushed' => ['الأحدث دفعاً على GitHub', 'pushed_at DESC, id DESC'],
+            'newest' => ['الأحدث إضافةً', 'id DESC'],
+            'oldest' => ['الأقدم إضافةً', 'id ASC'],
+            'alpha' => ['أبجدياً (A–Z)', 'name ASC'],
+        ],
         'columns' => [
             ['label' => '', 'fmt' => fn($r) => $r['image'] ? '<img class="thumb" src="' . e(upload_url($r['image'])) . '" alt="">' : ''],
-            ['label' => 'الاسم', 'fmt' => fn($r) => '<b>' . e($r['name']) . '</b>'],
-            ['label' => 'المصدر', 'fmt' => fn($r) => $r['gh_id'] ? 'GitHub' : 'يدوي'],
+            ['label' => 'الاسم', 'fmt' => fn($r) => '<b>' . e($r['name']) . '</b>' . ($r['language'] ? '<br><span class="chip">' . e($r['language']) . '</span>' : '')],
+            ['label' => 'المصدر', 'fmt' => fn($r) => $r['gh_id'] ? '<span class="chip ok">GitHub</span>' : '<span class="chip">يدوي</span>'],
             ['label' => 'مميّز', 'fmt' => fn($r) => $r['featured'] ? '★' : ''],
             ['label' => 'مخفي', 'fmt' => fn($r) => $r['hidden'] ? '🚫' : ''],
-            ['label' => 'نجوم', 'fmt' => fn($r) => (string)(int)$r['stars']],
+            ['label' => 'نجوم', 'fmt' => fn($r) => '★ ' . (int)$r['stars']],
+            ['label' => 'ترتيب', 'fmt' => fn($r) => (string)(int)$r['sort_order']],
         ],
     ],
     'list_top' => function (): void {
         $pending = (int)val('SELECT COUNT(*) FROM projects WHERE gh_id IS NOT NULL AND checked_at=0');
         $log = rows('SELECT * FROM sync_log ORDER BY id DESC LIMIT 5');
-        echo '<div class="panel"><h2>المزامنة مع GitHub (يدوية)</h2><p class="muted">المستخدم: <b dir="ltr">' . e(gh_user() ?: '—') . '</b> · التوكن: '
-           . (gh_token() !== '' ? 'مضبوط' : 'غير مضبوط (حد 60 طلب/ساعة)') . ($pending ? " · مشاريع لم تُفحص بعد: $pending (اضغط مزامنة مرة أخرى)" : '') . '</p>';
+        $curPubSort = setting('projects_sort', 'custom');
+        echo '<div class="cols" style="margin-bottom:18px">';
+        echo '<div class="panel" style="margin-bottom:0"><h2>المزامنة مع GitHub</h2><p class="muted">المستخدم: <b dir="ltr">' . e(gh_user() ?: '—') . '</b> · التوكن: '
+           . (gh_token() !== '' ? 'مضبوط' : 'غير مضبوط (حد 60 طلب/ساعة)') . ($pending ? " · مشاريع لم تُفحص بعد: $pending" : '') . '</p>';
         f_open('projects', 'sync'); f_chk('force', 'مزامنة كاملة (إعادة جلب README والإصدارات)', false);
-        echo '<button class="btn" type="submit">مزامنة الآن</button></form>';
+        echo '<button class="btn" type="submit">🔄 مزامنة الآن</button></form>';
         if ($log) { echo '<div class="tw" style="margin-top:12px"><table>'; foreach ($log as $l) echo '<tr><td>' . e(ts_fmt($l['ts'])) . '</td><td>' . ($l['ok'] ? '✓' : '⚠') . '</td><td dir="ltr">' . e($l['summary']) . '</td></tr>'; echo '</table></div>'; }
-        echo '<p class="muted" style="margin-top:10px">مزامنة تلقائية اختيارية: أضف Cron Job في هوستنجر يشغّل <code dir="ltr">php ' . e(ROOT) . '/cron_sync.php</code> (راجع docs/DEPLOY.md).</p></div>';
+        echo '</div>';
+
+        echo '<div class="panel" style="margin-bottom:0"><h2>ترتيب عرض المستودعات في الموقع</h2><p class="muted">اختر كيف يظهر ترتيب المستودعات افتراضياً للزوار في صفحة المشاريع والرئيسية (ويمكن للزائر أيضاً تبديل الترتيب أثناء التصفح).</p>';
+        f_open('projects', 'save_display_sort');
+        f_sel('projects_sort', 'طريقة الترتيب الافتراضية في العرض العام', PROJ_PUBLIC_SORTS, $curPubSort);
+        echo '<button class="btn ghost" type="submit">حفظ طريقة العرض</button></form></div>';
+        echo '</div>';
     },
     'extra_actions' => [
         'sync' => function (): void {
             [$ok, $sum] = sync_and_log(PB('force') === 1);
             audit('sync', $sum); flash(($ok ? 'اكتملت المزامنة: ' : 'فشلت المزامنة: ') . $sum, $ok);
+        },
+        'save_display_sort' => function (): void {
+            $s = array_key_exists(P('projects_sort'), PROJ_PUBLIC_SORTS) ? P('projects_sort') : 'custom';
+            set_setting('projects_sort', $s);
+            audit('projects_sort', $s); flash('تم تحديث طريقة ترتيب عرض المستودعات.');
         },
     ],
 ]);

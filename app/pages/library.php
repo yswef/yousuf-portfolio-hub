@@ -8,7 +8,8 @@ page_head(t('nav_library'), t('nav_library'), t('library_sub'));
 ?>
 <section><div class="container">
 <?php if (!$sites): ?><p class="projects-empty">—</p><?php else: ?>
-<div class="grid">
+<?php search_box(); ?>
+<div class="grid" data-filter-list>
 <?php foreach ($sites as $s):
     $locked = !(int)$s['is_public'];
     $isPage = ($s['kind'] ?? 'site') === 'page';
