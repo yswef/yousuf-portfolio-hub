@@ -93,5 +93,14 @@
  "rights": "Todos los derechos reservados",
  "privacy_title": "Política de privacidad",
  "badge_available": "Disponible para trabajar",
- "hero_name_hi": "Hola, soy"
+ "hero_name_hi": "Hola, soy",
+ "sort_by": "Ordenar por",
+ "sort_featured": "Destacados",
+ "sort_stars": "Más estrellas ★",
+ "sort_updated": "Actualizados",
+ "sort_newest": "Más recientes",
+ "sort_oldest": "Más antiguos",
+ "sort_downloads": "Más descargados",
+ "sort_name": "Alfabético",
+ "filter_all": "Todos"
 }

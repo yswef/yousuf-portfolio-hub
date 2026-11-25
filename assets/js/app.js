@@ -21,6 +21,7 @@
     b.addEventListener('click', function () { d.classList.add('open'); });
     if (c) c.addEventListener('click', function () { d.classList.remove('open'); });
     $$('a', d).forEach(function (a) { a.addEventListener('click', function () { d.classList.remove('open'); }); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') d.classList.remove('open'); });
     document.addEventListener('click', function (e) { var m = $('.langsw[open]'); if (m && !m.contains(e.target)) m.removeAttribute('open'); });
   }
   function reveal() {
@@ -48,10 +49,13 @@
   }
   function filter() {
     var fi = $('[data-filter]'), fl = $('[data-filter-list]'); if (!fi || !fl) return;
-    fi.addEventListener('input', function () {
+    function apply() {
       var q = fi.value.trim().toLowerCase();
       $$('[data-search]', fl).forEach(function (c) { c.style.display = !q || (c.getAttribute('data-search') || '').indexOf(q) > -1 ? '' : 'none'; });
-    });
+    }
+    fi.addEventListener('input', apply);
+    fi.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); apply(); } });
+    if (fi.value.trim() !== '') apply();
   }
   function print() { $$('[data-print]').forEach(function (b) { b.addEventListener('click', function () { window.print(); }); }); }
   function glow() {

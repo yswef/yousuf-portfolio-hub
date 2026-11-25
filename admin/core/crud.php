@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Field types (key 't'): text, url, num, date, textarea, md, select(opts), check, slug(from),
  *   i18n, i18n_area, image, ts_created, ts_updated, hidden(value)
  * Optional keys: label, req, max, help, ph(placeholder), dir
- * Config: table, one (singular label), fields, list[columns|order|where|filter], before_save(&$data,$old), after_delete($row),
+ * Config: table, one (singular label), fields, list[columns|order|where|filter|sorts|search], before_save(&$data,$old), after_delete($row),
  *   list_top(callable), edit_extra(callable $row), extra_actions[name=>callable] merged into the module.
  * Everything not CRUD-shaped can still be added through 'actions' / 'view' in the same manifest.
  */
@@ -37,7 +37,28 @@ function crud_resolve(array $c): array {
     $c['list']['where'] = "type='" . str_replace("'", '', $t) . "'";
     return $c;
 }
-function crud_q(array $c, array $q = []): array { return (isset($c['ctype']) ? ['f' => $c['ctype']] : []) + $q; }
+function crud_q(array $c, array $q = []): array {
+    $keep = [];
+    foreach (['q', 'sort', 'vis'] as $k) if (!empty($_GET[$k])) $keep[$k] = (string)$_GET[$k];
+    return (isset($c['ctype']) ? ['f' => $c['ctype']] : []) + $keep + $q;
+}
+/** Sort options for a CRUD list: module-defined 'sorts' win, otherwise default + sort_order (if present) + newest/oldest. */
+function crud_sorts(array $c): array {
+    if (!empty($c['list']['sorts'])) return $c['list']['sorts'];
+    $s = ['default' => ['الافتراضي', $c['list']['order']]];
+    if (isset($c['fields']['sort_order'])) $s['order_asc'] = ['الترتيب تصاعدياً', 'sort_order ASC, id DESC'];
+    if (isset($c['fields']['level'])) $s['level_desc'] = ['الأعلى مستوى', 'level DESC, id DESC'];
+    $s['newest'] = ['الأحدث', 'id DESC'];
+    $s['oldest'] = ['الأقدم', 'id ASC'];
+    return $s;
+}
+/** Searchable columns: module-defined 'search' wins, otherwise all text-ish fields. */
+function crud_search_cols(array $c): array {
+    if (!empty($c['list']['search'])) return $c['list']['search'];
+    $cols = [];
+    foreach ($c['fields'] as $f => $d) if (in_array($d['t'] ?? 'text', ['text', 'textarea', 'md', 'i18n', 'i18n_area', 'url', 'slug'], true)) $cols[] = $f;
+    return $cols;
+}
 
 function crud_collect(array $c, ?array $old): array {
     $d = []; $now = time();
@@ -49,7 +70,9 @@ function crud_collect(array $c, ?array $old): array {
             case 'num': $d[$f] = PN($f); break;
             case 'check': $d[$f] = PB($f); break;
             case 'select': $v = P($f); $d[$f] = array_key_exists($v, $d0['opts']) ? $v : (string)array_key_first($d0['opts']); break;
-            case 'i18n': case 'i18n_area': $d[$f] = i18n_post($f, (int)($d0['max'] ?? 20000)); break;
+            case 'i18n': case 'i18n_area':
+                $d[$f] = i18n_json_auto_fill(i18n_post($f, (int)($d0['max'] ?? 20000)), $old ? (string)($old[$f] ?? '') : null);
+                break;
             case 'hidden': $d[$f] = $d0['value']; break;
             case 'ts_updated': $d[$f] = $now; break;
             case 'ts_created': if (!$old) $d[$f] = $now; break;
@@ -118,9 +141,50 @@ function crud_view(array $mod, array $c): void {
         echo '</div>';
         if ($cur !== '' && isset($c['fields'][$flt]['opts'][$cur])) { $where .= " AND $flt=?"; $p[] = $cur; }
     }
-    $data = rows("SELECT * FROM {$c['table']} WHERE $where ORDER BY {$c['list']['order']} LIMIT 500", $p);
-    echo '<div class="row" style="margin-bottom:14px"><a class="btn" href="' . adm_url($c['id'], crud_q($c, ['edit' => 0])) . '">+ ' . e($c['new_label'] ?? ('إضافة ' . $c['one'])) . '</a></div>';
-    if (!$data) { echo '<div class="panel"><p class="muted">لا توجد عناصر بعد.</p></div>'; return; }
+
+    // ---- filters: text search + visibility/status + user-chosen sort ----
+    $sorts = crud_sorts($c);
+    $curSort = array_key_exists((string)($_GET['sort'] ?? ''), $sorts) ? (string)$_GET['sort'] : 'default';
+    $orderBy = $sorts[$curSort][1];
+    $q = trim((string)($_GET['q'] ?? ''));
+    if ($q !== '') {
+        $cols = crud_search_cols($c);
+        if ($cols) {
+            $like = [];
+            foreach ($cols as $col) $like[] = "$col LIKE ?";
+            $where .= ' AND (' . implode(' OR ', $like) . ')';
+            foreach ($cols as $col) $p[] = '%' . $q . '%';
+        }
+    }
+    $visOpts = ['' => 'الحالة: الكل'];
+    if (isset($c['fields']['hidden'])) { $visOpts['visible'] = 'ظاهر للزوار'; $visOpts['hidden'] = 'مخفي'; }
+    if (isset($c['fields']['published'])) { $visOpts['pub'] = 'منشور'; $visOpts['draft'] = 'مسودة'; }
+    if (isset($c['fields']['featured'])) { $visOpts['featured'] = '★ مميّز فقط'; }
+    $vis = array_key_exists((string)($_GET['vis'] ?? ''), $visOpts) ? (string)$_GET['vis'] : '';
+    if ($vis === 'visible' && isset($c['fields']['hidden'])) $where .= ' AND hidden=0';
+    elseif ($vis === 'hidden' && isset($c['fields']['hidden'])) $where .= ' AND hidden=1';
+    elseif ($vis === 'pub' && isset($c['fields']['published'])) $where .= ' AND published=1';
+    elseif ($vis === 'draft' && isset($c['fields']['published'])) $where .= ' AND published=0';
+    elseif ($vis === 'featured' && isset($c['fields']['featured'])) $where .= ' AND featured=1';
+
+    $baseQ = isset($c['ctype']) ? ['f' => $c['ctype']] : ($flt && !empty($_GET['f']) ? ['f' => (string)$_GET['f']] : []);
+    echo '<form method="get" class="filter-bar"><input type="hidden" name="m" value="' . e($c['id']) . '">'
+       . (isset($c['ctype']) ? '<input type="hidden" name="f" value="' . e($c['ctype']) . '">' : ($flt && !empty($_GET['f']) ? '<input type="hidden" name="f" value="' . e((string)$_GET['f']) . '">' : ''))
+       . '<input type="search" name="q" value="' . e($q) . '" placeholder="🔎 بحث في ' . e($c['one']) . '…" aria-label="بحث">';
+    if (count($visOpts) > 1) {
+        echo '<select name="vis" onchange="this.form.submit()" aria-label="الحالة">';
+        foreach ($visOpts as $vk => $vl) echo '<option value="' . e($vk) . '"' . ($vk === $vis ? ' selected' : '') . '>' . e($vl) . '</option>';
+        echo '</select>';
+    }
+    echo '<select name="sort" onchange="this.form.submit()" aria-label="الترتيب">';
+    foreach ($sorts as $k => $s) echo '<option value="' . e($k) . '"' . ($k === $curSort ? ' selected' : '') . '>الترتيب: ' . e($s[0]) . '</option>';
+    echo '</select><button class="btn ghost sm" type="submit">تصفية</button>';
+    if ($q !== '' || $curSort !== 'default' || $vis !== '') echo '<a class="btn ghost sm" href="' . e(adm_url($c['id'], $baseQ)) . '">إعادة تعيين</a>';
+    echo '</form>';
+
+    $data = rows("SELECT * FROM {$c['table']} WHERE $where ORDER BY $orderBy LIMIT 500", $p);
+    echo '<div class="row" style="margin-bottom:14px"><a class="btn" href="' . adm_url($c['id'], crud_q($c, ['edit' => 0])) . '">+ ' . e($c['new_label'] ?? ('إضافة ' . $c['one'])) . '</a><span class="chip">' . count($data) . ' عنصر</span></div>';
+    if (!$data) { echo '<div class="panel"><p class="muted">لا توجد عناصر مطابقة.</p></div>'; return; }
     echo '<div class="panel tw"><table><thead><tr>';
     foreach ($c['list']['columns'] as $col) echo '<th>' . e($col['label']) . '</th>';
     echo '<th></th></tr></thead><tbody>';
@@ -141,14 +205,16 @@ function crud_form(array $c, int $id): void {
     $r = $id ? row("SELECT * FROM {$c['table']} WHERE id=?", [$id]) : null;
     if ($id && !$r) { echo '<div class="note bad">العنصر غير موجود.</div>'; return; }
     $multipart = (bool)array_filter($c['fields'], fn($f) => ($f['t'] ?? '') === 'image');
-    echo '<div class="panel"><h2>' . e($id ? 'تعديل ' . $c['one'] : 'إضافة ' . $c['one']) . '</h2>';
+    $hasI18n = (bool)array_filter($c['fields'], fn($f) => in_array($f['t'] ?? '', ['i18n', 'i18n_area'], true));
+    echo '<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0">' . e($id ? 'تعديل ' . $c['one'] : 'إضافة ' . $c['one']) . '</h2>'
+       . ($hasI18n ? '<button type="button" class="btn ghost sm" data-autotranslate-all>🌐 ترجمة كل الحقول من العربية</button>' : '') . '</div>';
     f_open($c['id'], 'save', ['id' => $id] + (isset($c['ctype']) ? ['ctype' => $c['ctype']] : []), $multipart, 'form');
     foreach ($c['fields'] as $f => $d) {
         $t = $d['t'] ?? 'text'; $lab = ($d['label'] ?? $f) . (!empty($d['req']) ? ' *' : ''); $v = $r[$f] ?? ($d['default'] ?? '');
         $attr = (!empty($d['dir']) ? 'dir="' . e($d['dir']) . '" ' : '') . (!empty($d['ph']) ? 'placeholder="' . e($d['ph']) . '" ' : '') . 'maxlength="' . (int)($d['max'] ?? 255) . '"';
         switch ($t) {
             case 'text': f_in($f, $lab, $v, 'text', $attr); break;
-            case 'url': f_in($f, $lab, $v, 'text', 'dir="ltr" placeholder="https://" ' . 'maxlength="255"'); break;
+            case 'url': f_in($f, $lab, $v, 'text', 'dir="ltr" placeholder="https://" maxlength="255"'); break;
             case 'date': f_in($f, $lab, $v, 'text', 'dir="ltr" placeholder="YYYY-MM or YYYY-MM-DD" maxlength="20"'); break;
             case 'num': f_in($f, $lab, $v === '' ? 0 : $v, 'number', 'dir="ltr"'); break;
             case 'textarea': f_ta($f, $lab, $v, (int)($d['rows'] ?? 4)); break;

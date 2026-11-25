@@ -7,7 +7,8 @@ page_head(t('nav_docs'), t('nav_docs'), t('docs_sub'));
 ?>
 <section><div class="container">
 <?php if (!$docs): ?><p class="projects-empty">—</p><?php else: ?>
-<div class="grid">
+<?php search_box(); ?>
+<div class="grid" data-filter-list>
 <?php foreach ($docs as $d):
     $label = '';
     if (!empty($d['project_slug']) && isset($projects[$d['project_slug']])) $label = tr($projects[$d['project_slug']], 'title', 'name');

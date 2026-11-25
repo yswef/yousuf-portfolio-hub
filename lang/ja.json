@@ -93,5 +93,14 @@
  "rights": "全著作権所有",
  "privacy_title": "プライバシーポリシー",
  "badge_available": "お仕事受付中",
- "hero_name_hi": "こんにちは、"
+ "hero_name_hi": "こんにちは、",
+ "sort_by": "並び替え",
+ "sort_featured": "おすすめ順",
+ "sort_stars": "スター順 ★",
+ "sort_updated": "更新日順",
+ "sort_newest": "新着順",
+ "sort_oldest": "古い順",
+ "sort_downloads": "ダウンロード順",
+ "sort_name": "名前順",
+ "filter_all": "すべて"
 }

@@ -93,5 +93,14 @@
  "rights": "Tous droits réservés",
  "privacy_title": "Politique de confidentialité",
  "badge_available": "Disponible pour travailler",
- "hero_name_hi": "Bonjour, je suis"
+ "hero_name_hi": "Bonjour, je suis",
+ "sort_by": "Trier par",
+ "sort_featured": "Mis en avant",
+ "sort_stars": "Plus d'étoiles ★",
+ "sort_updated": "Mis à jour",
+ "sort_newest": "Plus récents",
+ "sort_oldest": "Plus anciens",
+ "sort_downloads": "Plus téléchargés",
+ "sort_name": "Alphabétique",
+ "filter_all": "Tous"
 }

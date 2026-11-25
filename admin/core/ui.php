@@ -18,7 +18,7 @@ function adm_title(array $m): string { return $m['title']['ar'] ?? $m['title']['
 function adm_page_open(string $title): void {
     ?><!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title><?= e($title) ?></title>
-<link rel="icon" href="<?= url('assets/img/favicon-32.png') ?>"><link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('admin/assets/admin.css') ?>?v=2"></head><?php
+<link rel="icon" href="<?= url('assets/img/favicon-32.png') ?>"><link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('admin/assets/admin.css') ?>?v=3"></head><?php
 }
 function adm_login_page(string $step, string $err): void {
     adm_page_open('تسجيل الدخول');
@@ -46,7 +46,7 @@ function adm_head(string $cur): void {
     adm_page_open('لوحة التحكم — ' . ($cur === 'dashboard' ? 'الرئيسية' : adm_title($MODS[$cur])));
     ?><body><div class="shell">
 <aside class="side" data-side>
-  <div class="side-top"><a class="brand" href="<?= adm_url() ?>">🔐 <?= e(setting_l('name') ?: 'لوحة التحكم') ?></a>
+  <div class="side-top"><a class="brand" href="<?= adm_url() ?>">◆ <?= e(setting_l('name') ?: 'لوحة التحكم') ?></a>
   <button class="burger" data-side-toggle aria-label="menu">☰</button></div>
   <nav>
     <a class="<?= $cur === 'dashboard' ? 'on' : '' ?>" href="<?= adm_url() ?>"><i>⌂</i>الرئيسية</a>
@@ -65,7 +65,7 @@ function adm_head(string $cur): void {
 <main class="main">
 <?php if (!empty($_SESSION['flash'])): [$fm, $fo] = $_SESSION['flash']; unset($_SESSION['flash']); ?><div class="note <?= $fo ? 'ok' : 'bad' ?>"><?= e($fm) ?></div><?php endif;
 }
-function adm_foot(): void { echo '</main></div><script src="' . url('admin/assets/admin.js') . '?v=2" defer></script></body></html>'; }
+function adm_foot(): void { echo '</main></div><script src="' . url('admin/assets/admin.js') . '?v=3" defer></script></body></html>'; }
 function adm_h(string $t, string $sub = ''): void { echo '<header class="ph"><h1>' . e($t) . '</h1>' . ($sub !== '' ? '<p class="muted">' . e($sub) . '</p>' : '') . '</header>'; }
 
 /* ---------- form helpers ---------- */
@@ -88,9 +88,10 @@ function f_sel(string $name, string $label, array $opts, $cur): void {
     foreach ($opts as $v => $n) echo '<option value="' . e((string)$v) . '"' . ((string)$v === (string)$cur ? ' selected' : '') . '>' . e($n) . '</option>';
     echo '</select></label>';
 }
-/** Per-language field: posts as name[ar], name[en], ... ; read back with i18n_post('name'). $vals = array lang=>text. */
+/** Per-language field: user enters Arabic only (auto-translated on save); language tabs remain available for optional review/override. */
 function f_i18n(string $name, string $label, array $vals = [], bool $area = false, int $rows = 3): void {
-    echo '<div class="i18n"><div class="i18n-h"><span>' . e($label) . '</span><span class="tabs">';
+    echo '<div class="i18n"><div class="i18n-h"><span class="i18n-lbl">' . e($label) . ' <small class="muted">(أدخل العربية فقط — يُترجم تلقائياً)</small></span>'
+       . '<span class="tabs"><button type="button" class="tab auto-btn" data-autotranslate title="ترجمة فورية من العربية لكل اللغات">🌐 ترجمة تلقائية</button>';
     $first = true;
     foreach (LANGS as $l => $info) {
         echo '<button type="button" class="tab' . ($first ? ' on' : '') . (trim((string)($vals[$l] ?? '')) !== '' ? ' has' : '') . '" data-lang="' . $l . '">' . strtoupper($l) . '</button>';
@@ -100,8 +101,9 @@ function f_i18n(string $name, string $label, array $vals = [], bool $area = fals
     foreach (LANGS as $l => $info) {
         echo '<div class="pane' . ($first ? ' on' : '') . '" data-lang="' . $l . '">';
         $v = e((string)($vals[$l] ?? ''));
-        if ($area) echo '<textarea name="' . e($name) . '[' . $l . ']" rows="' . $rows . '" dir="' . $info['dir'] . '">' . $v . '</textarea>';
-        else echo '<input name="' . e($name) . '[' . $l . ']" value="' . $v . '" dir="' . $info['dir'] . '">';
+        $ph = $l === 'ar' ? ' placeholder="اكتب بالعربية هنا وسيتم ترجمة باقي اللغات تلقائياً…"' : ' placeholder="يُترجم تلقائياً من العربية عند الحفظ (أو عدّله يدوياً)"';
+        if ($area) echo '<textarea name="' . e($name) . '[' . $l . ']" rows="' . $rows . '" dir="' . $info['dir'] . '"' . $ph . '>' . $v . '</textarea>';
+        else echo '<input name="' . e($name) . '[' . $l . ']" value="' . $v . '" dir="' . $info['dir'] . '"' . $ph . '>';
         echo '</div>'; $first = false;
     }
     echo '</div>';
