@@ -4,7 +4,19 @@ declare(strict_types=1);
 
 function admin_gate(): bool {
     if (!empty($_SESSION['admin_id']) && (time() - (int)($_SESSION['last'] ?? 0)) > 8 * 3600) { $_SESSION = []; session_regenerate_id(true); }
-    if (!empty($_SESSION['admin_id'])) { $_SESSION['last'] = time(); return true; }
+    if (!empty($_SESSION['admin_id'])) {
+        // Suspended or deleted team accounts lose access immediately (fail closed if the row is gone).
+        if (table_exists('admins')) {
+            $me = row('SELECT id, username, status FROM admins WHERE id=?', [(int)$_SESSION['admin_id']]);
+            if (!$me || (string)($me['status'] ?? 'active') !== 'active') {
+                $_SESSION = []; session_regenerate_id(true);
+                adm_login_page('login', 'تم إيقاف هذا الحساب. تواصل مع مالك اللوحة.');
+                exit;
+            }
+            $_SESSION['admin_name'] = (string)$me['username'];
+        }
+        $_SESSION['last'] = time(); return true;
+    }
 
     // The admins table may not exist yet on a brand-new DB: create core tables first.
     if (!table_exists('admins')) { try { migrate_all(); } catch (Throwable $e) { adm_fatal($e->getMessage()); } }
@@ -44,5 +56,6 @@ function admin_login(array $a): void {
     session_regenerate_id(true);
     $_SESSION['admin_id'] = (int)$a['id']; $_SESSION['admin_name'] = (string)$a['username']; $_SESSION['last'] = time();
     unset($_SESSION['pending_2fa'], $_SESSION['csrf']);
+    try { upd('admins', ['last_login' => time()], 'id=?', [(int)$a['id']]); } catch (Throwable $e) {}
     audit('login');
 }

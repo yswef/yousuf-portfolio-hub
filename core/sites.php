@@ -83,13 +83,25 @@ function is_admin_viewer(): bool {
     if (session_status() !== PHP_SESSION_ACTIVE) { session_name('ysid_admin'); @session_start(['read_and_close' => true, 'cookie_httponly' => true, 'cookie_secure' => is_https(), 'cookie_samesite' => 'Lax']); }
     return !empty($_SESSION['admin_id']) && (time() - (int)($_SESSION['last'] ?? 0)) <= 8 * 3600;
 }
+/** Inject the Mother Panel floating return button into hosted-site HTML (locked/private → Admin ONLY). */
+function site_inject_fab(string $html, bool $lockedOrAdminOnly): string {
+    $btn = function_exists('render_floating_return_btn')
+        ? render_floating_return_btn($lockedOrAdminOnly)
+        : '<a target="_top" href="' . e($lockedOrAdminOnly ? url('admin/') : url('')) . '" style="position:fixed;bottom:20px;inset-inline-end:20px;z-index:99999;display:inline-flex;padding:10px 18px;border-radius:999px;background:#0d9488;color:#fff;font:700 13px system-ui;text-decoration:none">'
+          . e($lockedOrAdminOnly ? '🔒 العودة للوحة التحكم الأساسية' : '⌂ الموقع الأساسي') . '</a>';
+    if (preg_match('/<\/body\s*>/i', $html)) {
+        return (string)preg_replace('/<\/body\s*>/i', $btn . '</body>', $html, 1);
+    }
+    return $html . $btn;
+}
 function site_lock_page(string $slug, string $path): never {
     http_response_code(403); header('Content-Type: text/html; charset=utf-8'); header('Cache-Control: no-store'); header('X-Robots-Tag: noindex');
     $next = rawurlencode(url('s/' . $slug . '/' . $path));
+    $fab = function_exists('render_floating_return_btn') ? render_floating_return_btn(true) : '';
     echo '<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>🔒</title>'
        . '<body style="font-family:system-ui,Tahoma,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#050b14;color:#e8f1f9;text-align:center"><div><div style="font-size:64px">🔒</div>'
        . '<h2>هذه الصفحة خاصة</h2><p style="color:#8fa9c3">تظهر للمدير فقط بعد تسجيل الدخول.</p>'
-       . '<a href="' . e(url('admin/') . '?next=' . $next) . '" style="display:inline-block;margin-top:8px;padding:10px 26px;border-radius:12px;background:#2dd4bf;color:#04121a;font-weight:700;text-decoration:none">تسجيل الدخول</a></div></body></html>';
+       . '<a href="' . e(url('admin/') . '?next=' . $next) . '" style="display:inline-block;margin-top:8px;padding:10px 26px;border-radius:12px;background:#2dd4bf;color:#04121a;font-weight:700;text-decoration:none">تسجيل الدخول</a></div>' . $fab . '</body></html>';
     exit;
 }
 /** Serves /s/<slug>/<path>. Private site, or a locked page → admin session required. */
@@ -113,7 +125,13 @@ function site_serve(string $slug, string $path): never {
     header('Content-Type: ' . SITE_MIME[$ext]); header('X-Content-Type-Options: nosniff'); header('Referrer-Policy: no-referrer');
     header($private ? 'Cache-Control: private, no-store' : 'Cache-Control: public, max-age=300');
     if ($private) header('X-Robots-Tag: noindex');
-    if ((int)$site['is_public'] && in_array($ext, ['html', 'htm', 'svg'], true) && cfg('sites_sandbox', true)) header('Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups allow-downloads');   // public sites run in an opaque origin → can never touch the admin session (private sites need the cookie for their assets, so no sandbox there)
+    if ((int)$site['is_public'] && in_array($ext, ['html', 'htm', 'svg'], true) && cfg('sites_sandbox', true)) header('Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups allow-downloads allow-top-navigation-by-user-activation');   // public sites run in an opaque origin → can never touch the admin session (private sites need the cookie for their assets, so no sandbox there); top-navigation-by-user-activation lets the floating return button navigate out on click
+    if (in_array($ext, ['html', 'htm'], true)) {
+        $html = (string)file_get_contents($real);
+        $html = site_inject_fab($html, $private);
+        header('Content-Length: ' . strlen($html));
+        echo $html; exit;
+    }
     header('Content-Length: ' . filesize($real));
     readfile($real); exit;
 }

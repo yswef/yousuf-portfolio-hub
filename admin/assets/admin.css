@@ -13,6 +13,12 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--surface2
 .side nav{padding:10px;flex:1}.side nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:var(--muted);font-weight:600}.side nav a i{font-style:normal;width:22px;text-align:center}
 .side nav a:hover{background:var(--surface2);color:var(--text);text-decoration:none}.side nav a.on{background:linear-gradient(120deg,rgba(45,212,191,.18),rgba(56,189,248,.14));color:var(--accent);border-inline-start:3px solid var(--accent)}.grp{font-size:.72rem;letter-spacing:2px;color:var(--muted);padding:14px 12px 4px;opacity:.7}
 .pill{margin-inline-start:auto;background:var(--bad);color:#0a0f16;border-radius:99px;padding:0 8px;font-size:.75rem}
+.who{display:grid;gap:2px;padding:8px 12px;border:1px solid var(--border);border-radius:10px}.who b{font-size:.85rem}.who span{font-size:.72rem;color:var(--accent)}
+.role-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.role-card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--bg)}
+.role-card b{display:block;font-size:.92rem;margin-bottom:4px}.role-card p{margin:0;font-size:.78rem;color:var(--muted);line-height:1.6}
+.role-card .chip{margin-top:8px}
+.perm-table code{font-size:.75rem}
 .side-bot{padding:12px;border-top:1px solid var(--border);display:grid;gap:6px}.side-bot a,.link{background:none;border:0;color:var(--muted);font:inherit;text-align:start;cursor:pointer;padding:6px 12px}.link:hover{color:var(--text)}
 .main{padding:26px clamp(16px,3vw,40px) 60px;min-width:0;max-width:1460px}.ph{margin-bottom:20px}.ph h1{font-size:1.6rem}
 .dash-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:8px}.dash-top .ph{margin-bottom:0}

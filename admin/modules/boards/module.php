@@ -11,6 +11,8 @@ declare(strict_types=1);
  * Top bar: [لوحة جديدة] [الترتيب] [استخراج تقرير] (popup: apps + period).
  */
 
+require_once __DIR__ . '/lib.php';
+
 const BOARDS_TYPES = [
     'mobile' => 'موبايل', 'desktop' => 'سطح مكتب', 'both' => 'موبايل وسطح مكتب',
     'whatsapp_bot' => 'بوت واتساب', 'browser_extension' => 'إضافة متصفح', 'other' => 'أخرى',
@@ -42,6 +44,7 @@ function boards_prompt(array $b): string {
     $tablesTxt = $tables ? implode(', ', $tables) : '(جداول قاعدة البيانات الموحّدة — راجع ملف الخريطة المرفق)';
     $dev = trim((string)($b['developer_name'] ?? '')) !== '' ? (string)$b['developer_name'] : 'يوسف الحمزي';
     $devMail = trim((string)($b['developer_email'] ?? '')) !== '' ? (string)$b['developer_email'] : '(بريد المطوّر)';
+    $appId = (int)($b['id'] ?? 0);
     $lines = [
         'أنت موديل يعمل على مشروع/تطبيق واحد محدد. مهمتك: بناء لوحة تحكم (Admin Panel) لهذا التطبيق — أو إعادة بنائها بالكامل — بما يتوافق مع «لوحة الأم» (Mother Panel) الخاصة بالمطوّر، وباتباع التعليمات الصارمة التالية دون أي اجتهاد خارجها.',
         '',
@@ -49,26 +52,57 @@ function boards_prompt(array $b): string {
         '• اسم التطبيق: ' . $name,
         '• نوع التطبيق: ' . $type . ' (موبايل / سطح مكتب / الاثنين / بوت واتساب / إضافة متصفح / أخرى — التزم بهذا النوع فقط)',
         '• المطوّر: ' . $dev . ' — ' . $devMail,
+        '• معرّف التطبيق في اللوحة الأم (app_id = boards.id): ' . ($appId > 0 ? (string)$appId : '(يُحدَّد عند الإنشاء)'),
+        '',
+        '■ البيئة التقنية (إلزامي):',
+        '• اللوحة الأم PHP خالص على Hostinger — ليست WordPress. لا تستخدم أي إضافات/قوالب ووردبريس، ولا كوداً يتطلب ووردبريس.',
+        '• اللوحة الأم وحدها تملك الكود/الرمز والتوكنات (بصمات SHA-256 فقط في قاعدة البيانات). لوحتك الفرعية بلا كود PHP مستقل ولا تملك توكنات خام — كل التحكم يتم عبر بوابة الـ API في اللوحة الأم.',
         '',
         '■ القواعد الصارمة:',
         '1) عدد الملفات والمجلدات في اللوحة لا يهمّ إطلاقاً — اختر البنية الأنسب، المهم الالتزام ببقية القواعد.',
         '2) أرفق «خريطة تثبيت» (ملف MAP / JSON) يساعد لوحة الأم على التثبيت وحفظ مسارات الملفات بالترتيب الصحيح، مع خطوة تحقّق (Verify) تؤكد نجاح التثبيت وترتيب الملفات قبل الإعلان عن الاكتمال. لا يحصل أي خطأ في ترتيب الملفات.',
-        '3) المزامنة مع لوحة الأم (إلزامية):',
-        '   • لوحة الأم هي الوحيدة التي تحتوي الكود/الرمز؛ بقية اللوحات بدون كود مستقل وتعمل عبر لوحة الأم.',
+        '3) المزامنة مع لوحة الأم (إلزامية — أونلاين دائماً):',
+        '   • أُلغي مبدأ العمل دون اتصال: تسجيل الدخول إلزامي قبل فتح التطبيق، والمزامنة بين الأجهزة إلزامية (نفس الحساب يفتح على أي جهاز ويُزامَن).',
         '   • الإحصائيات: اعرض عدد المستخدمين وكل إحصائيات التطبيق (تنزيلات، تراخيص، تقييمات…) في الرئيسية، ووفّر واجهة صغيرة في قسم «لوحات الإدارة» لكل لوحة بطاقة تعرض إحصائياتها منفصلة — كل تطبيق منفصل عن الآخر.',
-        '   • قاعدة البيانات واحدة وموحّدة بلا تعارضات ولا تضاربات. جدول المستخدمين موحّد لكل التطبيقات (مجموعة تطبيقات المطوّر) — لا تكرّر الجداول ولا تنشئ جدول مستخدمين لكل تطبيق. اذكر كل الجداول الموجودة وأنواع المتغيّرات التي يحتاجها ويستخدمها هذا التطبيق فقط. الجداول الحالية: ' . $tablesTxt . '.',
+        '   • قاعدة البيانات واحدة وموحّدة بلا تعارضات ولا تضاربات. الجداول المشتركة الموجودة لا تُكرَّر أبداً لكل تطبيق (ممنوع إنشاء users أو أي جدول مكرّر لكل تطبيق). الجداول المشتركة المسموح بها فقط — كلها بنطاق app_id صارم: app_users (UNIQUE(app_id,email))، app_sessions، devices (UNIQUE(app_id,device_uid))، releases (full/sub)، content_packs، app_settings_kv، asset_sources، app_requirements، sync_log. أي جدول جديد يجب أن يكون غير مكرّر ومشتركاً وبنطاق app_id. الجداول الحالية: ' . $tablesTxt . '.',
         '   • الحسابات منفصلة لكل تطبيق: من يسجّل في تطبيق ليس له حساب في التطبيقات الأخرى تلقائياً؛ ينشئ حساباً جديداً في كل تطبيق، لكن بنفس البريد الإلكتروني المسموح به.',
+        '   • حسابات الأدمن داخل التطبيق: إذا كان التطبيق يدير مستودعات أو حسابات كثيرة، فعيّن حقلاً is_admin في app_users (0/1). أي حساب أدمن مربوط تلقائياً بتوكن GitHub المركزي في اللوحة الأم، والحسابات العادية لا تصل إليه إطلاقاً.',
         '   • وحّد مدونات التطبيقات مع مدونة التعليقات في اللوحة: مدونة واحدة موحّدة هي آراء وتقييمات العملاء عن التطبيقات.',
-        '4) أضف في التطبيق قسماً يعرض «التطبيقات الأخرى» الموجودة عند المطوّر (روابط/بطاقات للتطبيقات الشقيقة).',
-        '5) هذا البرومت مولّد حسب اسم التطبيق ونوعه (' . $name . ' — ' . $type . ')؛ لا تعمّم على تطبيقات أخرى.',
-        '6) ضع أيقونة/صورة التطبيق لتظهر في بطاقة عرض اللوحة في لوحة الأم.',
-        '7) زامن لوحة إنشاء التراخيص للتطبيقات المدفوعة مع لوحة الأم (إنشاء/إلغاء/تفعيل ترخيص من مكان واحد).',
-        '8) سجّل بيانات المطوّر (' . $dev . ') في التطبيق، وفي الكود: في بداية كل ملف ونهايته (تعليق توقيع المطوّر).',
+        '4) استخدم بوابة الـ API الحقيقية في اللوحة الأم (JSON فقط — لا HTML أبداً):',
+        '   • الأساس: /api/v1/ مع ترويسة X-App-Token (أو Authorization: Bearer) من اللوحة الأم، ونطاق app_id صارم في كل استعلام.',
+        '   • النقاط المطلوبة: status (حالة التطبيق + الإعدادات + التحديثات + التطبيقات الشقيقة) · auth/register · auth/login · auth/session · auth/logout · sync (دفع/سحب مع إصدار المزامنة وكشف التعارض) · releases/check (تحديث APK كامل + تحديثات فرعية عند التشغيل + min_version) · content (حزم المحتوى) · licenses/verify · licenses/activate · telemetry (تنزيل/تقييم/مقاييس) · control (نظرة عامة/مستخدمون/أجهزة/إصدارات/إعدادات/متطلبات).',
+        '   • كل استدعاء API يُسجَّل في audit_log و sync_log مع req_id فريد — لا تستدعِ قاعدة البيانات مباشرة من التطبيق.',
+        '',
+        '■ توكن GitHub (مهم جداً للتطبيقات التي تتعامل مع GitHub والمستودعات):',
+        '   • يوجد توكن GitHub واحد مركزي محفوظ في اللوحة الأم (الإعدادات ← GitHub)، ويُدار من المطوّر فقط. لا تُنشئ توكنك الخاص ولا تطلب من المستخدم إدخال PAT.',
+        '   • فعّل الخيار «هذا التطبيق يتعامل مع GitHub» في تبويب إعدادات لوحة التطبيق باللوحة الأم؛ حينها فقط يستطيع التطبيق استخدام التوكن.',
+        '   • جلب التوكن يتم من الخادم فقط: control?op=github_token مع رأس X-Session-Token لحساب أدمن (app_users.is_admin=1) ورأس X-App-Token للتطبيق — ويُرفض لأي حساب عادي أو جلسة منتهية.',
+        '   • لا تكتب التوكن في الكود، ولا في الـ APK، ولا في ملفات المستودع، ولا في سجلات التطبيق. خزّنه في الذاكرة/متغير بيئة على الخادم فقط، واستخدمه نيابةً عن المستخدم.',
+        '   • كل عمليات GitHub (الفروع، الالتزامات، المقارنة، الدمج، الإصدارات) تُنفَّذ من الخادم باسم حساب الأدمن، وتُسجَّل في اللوحة الأم.',
+        '   • المطوّر يستطيع نسخ التوكن في أي وقت من لوحة التحكم (الإعدادات ← GitHub، أو تبويب إعدادات لوحة التطبيق) عند الحاجة لاستخدامه في مكان آخر.',
+        '   • إدارة الإصدارات: انشر APK كاملاً (full) يُنزَّل داخل التطبيق مع دعم permissions_changed وإعادة طلب الصلاحيات، وحدّد min_version للتحديث الإجباري، وانشر تحديثات فرعية خفيفة (sub) بيانات فقط تُسحب عند تشغيل التطبيق.',
+        '5) أضف في التطبيق قسماً يعرض «التطبيقات الأخرى» الموجودة عند المطوّر (روابط/بطاقات للتطبيقات الشقيقة).',
+        '6) هذا البرومت مولّد حسب اسم التطبيق ونوعه (' . $name . ' — ' . $type . ')؛ لا تعمّم على تطبيقات أخرى.',
+        '7) ضع أيقونة/صورة التطبيق لتظهر في بطاقة عرض اللوحة في لوحة الأم.',
+        '8) زامن لوحة إنشاء التراخيص للتطبيقات المدفوعة مع لوحة الأم (إنشاء/إلغاء/تفعيل ترخيص من مكان واحد).',
+        '9) سجّل بيانات المطوّر (' . $dev . ') في التطبيق، وفي الكود: في بداية كل ملف ونهايته (تعليق توقيع المطوّر).',
+        '10) اطلب صراحةً كل ما ينقصك: في ملف التسليم اذكر كل متطلب ناقص (صور، صوتيات، أيقونات، خطوط، فيديو، بيانات، مفاتيح/صلاحيات) مع المصدر والأولوية (critical/high/medium/low) والملاحظة — ستُسجَّل تلقائياً في تبويب «متطلبات التطبيقات» مرتبةً (الناقص أولاً ثم الأولوية) مع عدّاد نواقص لكل تطبيق.',
+        '',
+        '■ ملف التسليم الإلزامي (بوابة الاكتمال):',
+        '• يجب أن تُنتج ملفاً باسم MOTHER_PANEL_HANDOFF.md موجّهاً إلى موديل اللوحة الأم، داخل الـ zip، يتضمن:',
+        '   - التعديلات التي أجريتها (ملفاً بملف).',
+        '   - نقاط الـ API المستخدمة (المسارات والحقول).',
+        '   - الجداول المستخدمة ونطاق app_id (أي جدول جديد يجب أن يكون مشتركاً غير مكرّر).',
+        '   - الصلاحيات المطلوبة (permissions) وأي تغيير فيها.',
+        '   - المتطلبات الناقصة صراحةً (بكتلة JSON واحدة على الأقل: {"requirements":[{"category":"audio|images|icons|fonts|video|data|info|api|other","title":"...","source":"...","source_url":"...","priority":"critical|high|medium|low","status":"missing|provided","notes":"..."}]}) مع إعدادات افتراضية ({"settings":{...}}) و min_version إن وُجد.',
+        '   - خطوات التحقق (Verify) التي نفّذتها بنفسك.',
+        '• لا يُعلَن اكتمال تثبيت التطبيق أبداً قبل أن تقرأ اللوحة الأم هذا الملف وتنفّذ بنوده وتسجّل النتيجة. أي توكن/كلمة مرور/بيانات حساسة لا تُضمَّن نصاً — تُطلَب من المطوّر.',
         '',
         '■ المخرجات المطلوبة:',
-        '• ملفات اللوحة كاملة + ملف الخريطة (MAP) + ملف بيانات التطبيق (اسم، وصف، تاجات، علامات بحث، إصدار، أيقونة، توثيق) يعبّئه الموديل، ويراجعه المطوّر فقط.',
-        '• تأكيد كتابي باكتمال التثبيت بعد التحقق من الخريطة.',
-        '• لا تغيّر أي ملف خارج نطاق هذه اللوحة، ولا تنشئ جداول مكرّرة.',
+        '• ملفات اللوحة كاملة + ملف الخريطة (MAP) + ملف بيانات التطبيق (اسم، وصف، تاجات، علامات بحث، إصدار، أيقونة، توثيق) يعبّئه الموديل، ويراجعه المطوّر فقط + ملف MOTHER_PANEL_HANDOFF.md.',
+        '• تأكيد كتابي باكتمال التثبيت بعد التحقق من الخريطة وقراءة ملف التسليم وتنفيذ بنوده.',
+        '• لا تُنشئ بذرة/بيانات تجريبية للوحة الأم ولا تُدرج التطبيق مسبقاً في قاعدة بياناتها: اللوحة الأم تُنشئ السجل عند رفع الـ zip فقط، ولوحة التطبيق هذه يبنيها هذا الموديل ويُحدّثها المطوّر ويرفعها بنفسه.',
+        '• لا تغيّر أي ملف خارج نطاق هذه اللوحة، ولا تنشئ جداول مكرّرة، ولا تخترع توكنات أو بيانات استضافة.',
     ];
     return implode("\n", $lines);
 }
@@ -102,7 +136,7 @@ function boards_copy_btn(string $text, string $label): void {
 }
 
 return [
-    'title' => ['ar' => 'لوحات الإدارة', 'en' => 'Admin boards'], 'icon' => '▦', 'group' => 'app', 'order' => 15, 'version' => 1,
+    'title' => ['ar' => 'لوحات الإدارة', 'en' => 'Admin boards'], 'icon' => '▦', 'group' => 'app', 'order' => 15, 'version' => 2,
     'schema' => fn(array $T) => [
         "CREATE TABLE IF NOT EXISTS boards (id {$T['id']}, slug VARCHAR(190) UNIQUE, name VARCHAR(190), app_type VARCHAR(30) DEFAULT 'other', app_type_custom VARCHAR(100) NULL,
           description TEXT NULL, tags VARCHAR(500) NULL, search_tags VARCHAR(500) NULL, icon VARCHAR(255) NULL,
@@ -313,6 +347,146 @@ return [
             audit('comment_delete', (string)PN('id')); flash('حُذف التعليق.');
             adm_back('boards', ['edit' => PN('board_id')]);
         },
+        'issue_api_token' => function (): void {
+            $id = PN('board_id');
+            $b = row('SELECT * FROM boards WHERE id=?', [$id]);
+            if (!$b) adm_back('boards');
+            $plain = board_issue_api_token($id);
+            $_SESSION['new_api_token'] = $plain;
+            audit('board_api_token', (string)$id);
+            flash('وُلّد توكن API جديد — انسخه الآن (لن يظهر مرة أخرى).');
+            adm_back('boards', ['panel' => $id, 'tab' => 'settings']);
+        },
+        'save_board_extra' => function (): void {
+            $id = PN('board_id');
+            $b = row('SELECT * FROM boards WHERE id=?', [$id]);
+            if (!$b) adm_back('boards');
+            upd('boards', [
+                'min_app_version' => mb_substr(P('min_app_version'), 0, 60),
+                'online_required' => PB('online_required'),
+                'sync_enabled'    => PB('sync_enabled'),
+                'uses_github'     => PB('uses_github'),
+                'updated'         => time(),
+            ], 'id=?', [$id]);
+            audit('board_extra_save', (string)$id); flash('تم حفظ سياسات التطبيق.');
+            adm_back('boards', ['panel' => $id, 'tab' => 'settings']);
+        },
+        'save_handoff' => function (): void {
+            $id = PN('board_id');
+            $b = row('SELECT * FROM boards WHERE id=?', [$id]);
+            if (!$b) adm_back('boards');
+            upd('boards', ['handoff_md' => P('handoff_md'), 'handoff_status' => 'pending', 'updated' => time()], 'id=?', [$id]);
+            audit('board_handoff_save', (string)$id); flash('حُفظ ملف التسليم — اضغط «قراءة وتنفيذ والتحقق الآن».');
+            adm_back('boards', ['panel' => $id, 'tab' => 'handoff']);
+        },
+        'verify_handoff' => function (): void {
+            $id = PN('board_id');
+            try {
+                $r = handoff_execute_and_verify($id);
+                flash($r['ok'] ? '✓ تمت قراءة وتنفيذ MOTHER_PANEL_HANDOFF.md وتسجيل النتيجة.' : '✗ فشل التحقق — راجع تقرير ملف التسليم.', $r['ok']);
+            } catch (Throwable $e) { flash('خطأ في تنفيذ ملف التسليم: ' . $e->getMessage(), false); }
+            adm_back('boards', ['panel' => $id, 'tab' => 'handoff']);
+        },
+        'save_release' => function (): void {
+            $id = PN('board_id');
+            $b = row('SELECT * FROM boards WHERE id=?', [$id]);
+            if (!$b) adm_back('boards');
+            $ver = mb_substr(P('version'), 0, 60);
+            if ($ver === '') { flash('رقم الإصدار مطلوب.', false); adm_back('boards', ['panel' => $id, 'tab' => 'releases']); }
+            $type = P('release_type') === 'sub' ? 'sub' : 'full';
+            $payload = trim(P('payload_json'));
+            if ($payload !== '' && json_decode($payload, true) === null && $payload !== 'null') { flash('حمولة JSON غير صالحة.', false); adm_back('boards', ['panel' => $id, 'tab' => 'releases']); }
+            ins('releases', [
+                'app_id' => $id, 'version' => $ver, 'version_code' => max(1, PN('version_code')),
+                'min_version' => mb_substr(P('min_version'), 0, 60) ?: null,
+                'release_type' => $type, 'channel' => P('channel') === 'beta' ? 'beta' : 'stable',
+                'download_url' => mb_substr(P('download_url'), 0, 500) ?: null,
+                'sha256' => mb_substr(P('sha256'), 0, 128) ?: null,
+                'size_bytes' => max(0, PN('size_bytes')),
+                'permissions_changed' => PB('permissions_changed'),
+                'permissions_note' => mb_substr(P('permissions_note'), 0, 500) ?: null,
+                'changelog' => P('changelog'), 'payload_json' => $payload !== '' ? $payload : null,
+                'is_active' => PB('is_active'), 'created' => time(),
+            ]);
+            audit('release_save', "$id:$ver:$type"); flash('نُشر الإصدار ' . $ver . ' (' . $type . ').');
+            adm_back('boards', ['panel' => $id, 'tab' => 'releases']);
+        },
+        'toggle_release' => function (): void {
+            $r = row('SELECT * FROM releases WHERE id=?', [PN('id')]);
+            if ($r) upd('releases', ['is_active' => (int)$r['is_active'] ? 0 : 1], 'id=? AND app_id=?', [$r['id'], PN('board_id')]);
+            flash('تم تحديث حالة الإصدار.'); adm_back('boards', ['panel' => PN('board_id'), 'tab' => 'releases']);
+        },
+        'delete_release' => function (): void {
+            q('DELETE FROM releases WHERE id=? AND app_id=?', [PN('id'), PN('board_id')]);
+            audit('release_delete', (string)PN('id')); flash('حُذف الإصدار.'); adm_back('boards', ['panel' => PN('board_id'), 'tab' => 'releases']);
+        },
+        'save_pack' => function (): void {
+            $id = PN('board_id');
+            $key = mb_substr(P('pack_key'), 0, 100);
+            if ($key === '') { flash('مفتاح الحزمة مطلوب.', false); adm_back('boards', ['panel' => $id, 'tab' => 'content']); }
+            $payload = trim(P('payload_json'));
+            if ($payload !== '' && json_decode($payload, true) === null && $payload !== 'null') { flash('حمولة JSON غير صالحة.', false); adm_back('boards', ['panel' => $id, 'tab' => 'content']); }
+            $ex = row('SELECT id FROM content_packs WHERE app_id=? AND pack_key=?', [$id, $key]);
+            $d = ['title' => mb_substr(P('title'), 0, 190), 'kind' => mb_substr(P('kind'), 0, 40), 'version' => max(1, PN('version')),
+                'payload_json' => $payload !== '' ? $payload : null, 'file_url' => mb_substr(P('file_url'), 0, 500) ?: null,
+                'is_active' => PB('is_active'), 'updated' => time()];
+            if ($ex) upd('content_packs', $d, 'id=? AND app_id=?', [$ex['id'], $id]);
+            else ins('content_packs', $d + ['app_id' => $id, 'pack_key' => $key, 'created' => time()]);
+            audit('pack_save', "$id:$key"); flash('حُفظت حزمة المحتوى.');
+            adm_back('boards', ['panel' => $id, 'tab' => 'content']);
+        },
+        'delete_pack' => function (): void {
+            q('DELETE FROM content_packs WHERE id=? AND app_id=?', [PN('id'), PN('board_id')]);
+            flash('حُذفت الحزمة.'); adm_back('boards', ['panel' => PN('board_id'), 'tab' => 'content']);
+        },
+        'save_setting' => function (): void {
+            $id = PN('board_id');
+            $key = mb_substr(P('cfg_key'), 0, 100);
+            if ($key === '') { flash('مفتاح الإعداد مطلوب.', false); adm_back('boards', ['panel' => $id, 'tab' => 'content']); }
+            $ex = row('SELECT id FROM app_settings_kv WHERE app_id=? AND cfg_key=?', [$id, $key]);
+            if ($ex) upd('app_settings_kv', ['cfg_val' => P('cfg_val'), 'updated' => time()], 'id=? AND app_id=?', [$ex['id'], $id]);
+            else ins('app_settings_kv', ['app_id' => $id, 'cfg_key' => $key, 'cfg_val' => P('cfg_val'), 'updated' => time()]);
+            flash('حُفظ الإعداد السحابي.'); adm_back('boards', ['panel' => $id, 'tab' => 'content']);
+        },
+        'delete_setting' => function (): void {
+            q('DELETE FROM app_settings_kv WHERE id=? AND app_id=?', [PN('id'), PN('board_id')]);
+            flash('حُذف الإعداد.'); adm_back('boards', ['panel' => PN('board_id'), 'tab' => 'content']);
+        },
+        'toggle_user_status' => function (): void {
+            $u = row('SELECT * FROM app_users WHERE id=? AND app_id=?', [PN('id'), PN('board_id')]);
+            if ($u) {
+                $st = ($u['status'] ?? 'active') === 'active' ? 'suspended' : 'active';
+                upd('app_users', ['status' => $st, 'updated' => time()], 'id=? AND app_id=?', [$u['id'], PN('board_id')]);
+                if ($st !== 'active') upd('app_sessions', ['revoked' => 1], 'user_id=? AND app_id=?', [$u['id'], PN('board_id')]);
+            }
+            flash('تم تحديث حالة المستخدم.'); adm_back('boards', ['panel' => PN('board_id'), 'tab' => 'users']);
+        },
+        'revoke_session' => function (): void {
+            upd('app_sessions', ['revoked' => 1], 'id=? AND app_id=?', [PN('id'), PN('board_id')]);
+            flash('أُلغيت الجلسة.'); adm_back('boards', ['panel' => PN('board_id'), 'tab' => 'users']);
+        },
+        'toggle_device_status' => function (): void {
+            $d = row('SELECT * FROM devices WHERE id=? AND app_id=?', [PN('id'), PN('board_id')]);
+            if ($d) upd('devices', ['status' => ($d['status'] ?? 'active') === 'active' ? 'blocked' : 'active'], 'id=? AND app_id=?', [$d['id'], PN('board_id')]);
+            flash('تم تحديث حالة الجهاز.'); adm_back('boards', ['panel' => PN('board_id'), 'tab' => 'devices']);
+        },
+        'toggle_requirement' => function (): void {
+            $r = row('SELECT * FROM app_requirements WHERE id=? AND app_id=?', [PN('id'), PN('board_id')]);
+            if ($r) {
+                $st = ($r['status'] ?? 'missing') === 'missing' ? 'provided' : 'missing';
+                upd('app_requirements', ['status' => $st, 'provided_at' => $st === 'provided' ? time() : null, 'updated' => time()], 'id=? AND app_id=?', [$r['id'], PN('board_id')]);
+            }
+            flash('تم تحديث حالة المتطلب.'); adm_back('boards', ['panel' => PN('board_id'), 'tab' => 'requirements']);
+        },
+        'toggle_user_admin' => function (): void {
+            $u = row('SELECT * FROM app_users WHERE id=? AND app_id=?', [PN('id'), PN('board_id')]);
+            if ($u) {
+                $flag = (int)($u['is_admin'] ?? 0) === 1 ? 0 : 1;
+                upd('app_users', ['is_admin' => $flag, 'updated' => time()], 'id=? AND app_id=?', [$u['id'], PN('board_id')]);
+                audit('app_user_admin', PN('board_id') . ':' . $u['id'] . '=' . $flag);
+            }
+            flash('تم تحديث صلاحية الأدمن لهذا الحساب.'); adm_back('boards', ['panel' => PN('board_id'), 'tab' => 'users']);
+        },
         'delete_board' => function (): void {
             $b = row('SELECT * FROM boards WHERE id=?', [PN('id')]);
             if (!$b) adm_back('boards');
@@ -320,6 +494,13 @@ return [
             rm_tree(boards_board_dir((string)$b['slug']));
             q('DELETE FROM board_files WHERE board_id=?', [$b['id']]); q('DELETE FROM board_comments WHERE board_id=?', [$b['id']]);
             q('DELETE FROM board_licenses WHERE board_id=?', [$b['id']]); q('DELETE FROM board_stats WHERE board_id=?', [$b['id']]);
+            if (table_exists('app_users')) q('DELETE FROM app_users WHERE app_id=?', [$b['id']]);
+            if (table_exists('app_sessions')) q('DELETE FROM app_sessions WHERE app_id=?', [$b['id']]);
+            if (table_exists('devices')) q('DELETE FROM devices WHERE app_id=?', [$b['id']]);
+            if (table_exists('releases')) q('DELETE FROM releases WHERE app_id=?', [$b['id']]);
+            if (table_exists('content_packs')) q('DELETE FROM content_packs WHERE app_id=?', [$b['id']]);
+            if (table_exists('app_settings_kv')) q('DELETE FROM app_settings_kv WHERE app_id=?', [$b['id']]);
+            if (table_exists('app_requirements')) q('DELETE FROM app_requirements WHERE app_id=?', [$b['id']]);
             q('DELETE FROM boards WHERE id=?', [$b['id']]);
             audit('board_delete', (string)$b['slug']); flash('حُذفت اللوحة نهائياً مع كل بياناتها وملفاتها.');
             adm_back('boards');
@@ -372,6 +553,7 @@ return [
     },
 
     'view' => function (array $mod): void {
+        if (isset($_GET['panel'])) { boards_panel_view((int)$_GET['panel'], (string)($_GET['tab'] ?? 'overview')); return; }
         if (isset($_GET['edit'])) { boards_edit((int)$_GET['edit']); return; }
         boards_list();
     },
@@ -465,11 +647,14 @@ function boards_list(): void {
 function boards_card(array $b): void {
     $draft = ($b['status'] ?? 'draft') === 'draft';
     $hasZip = !empty($b['panel_zip_name']);
+    $panelUrl = boards_panel_url((int)$b['id'], 'overview');
+    $missingReqs = 0;
+    try { if (table_exists('app_requirements')) $missingReqs = (int)val("SELECT COUNT(*) FROM app_requirements WHERE app_id=? AND status='missing'", [$b['id']]); } catch (Throwable $e) {}
     echo '<article class="board-card' . ($draft ? ' draft' : '') . '">';
-    echo '<div class="board-head"><div class="board-icon">';
+    echo '<div class="board-head"><a class="board-icon" href="' . e($panelUrl) . '" title="فتح لوحة تحكم التطبيق">';
     if (!empty($b['icon'])) echo '<img src="' . e(upload_url((string)$b['icon'])) . '" alt="">';
     else echo '▦';
-    echo '</div><div style="flex:1;min-width:0"><div class="board-title">' . e($b['name']) . '</div><div class="board-meta"><span class="chip">' . e(boards_type_label($b)) . '</span><span class="chip">' . e(BOARDS_STATUS[$b['status']] ?? $b['status']) . '</span>' . (!empty($b['app_version']) ? '<span class="chip" dir="ltr">v' . e($b['app_version']) . '</span>' : '') . '</div></div>';
+    echo '</a><div style="flex:1;min-width:0"><a class="board-title" href="' . e($panelUrl) . '" style="color:inherit">' . e($b['name']) . '</a><div class="board-meta"><span class="chip">' . e(boards_type_label($b)) . '</span><span class="chip">' . e(BOARDS_STATUS[$b['status']] ?? $b['status']) . '</span>' . (!empty($b['app_version']) ? '<span class="chip" dir="ltr">v' . e($b['app_version']) . '</span>' : '') . '</div></div>';
     // 3-dot menu
     echo '<div class="dots"><button type="button" class="dots-btn" data-dots aria-label="خيارات">⋮</button><div class="dots-menu">';
     echo '<button type="button" data-copy="' . e(boards_prompt($b)) . '">📋 نسخ البرومت</button>';
@@ -488,12 +673,16 @@ function boards_card(array $b): void {
     if (!empty($b['app_version'])) echo '<span class="chip ' . ((int)$b['version_uploaded'] ? 'ok' : 'warn') . '">الإصدار ' . ((int)$b['version_uploaded'] ? 'مرفوع ✓' : 'غير مرفوع') . '</span>';
     if ((int)($b['docs_has'] ?? 0)) echo '<span class="chip ok">📘 توثيق' . (!empty($b['docs_site_slug']) ? ': /s/' . e((string)$b['docs_site_slug']) . '/' : '') . '</span>';
     if ($hasZip) echo '<span class="chip">' . (int)$b['panel_files_count'] . ' ملفاً في اللوحة</span>';
+    $hs = (string)($b['handoff_status'] ?? 'pending');
+    echo '<span class="chip ' . ($hs === 'verified' ? 'ok' : 'bad') . '">📦 التسليم: ' . ($hs === 'verified' ? 'مُتحقق ✓' : 'بانتظار MOTHER_PANEL_HANDOFF.md') . '</span>';
+    if ($missingReqs > 0) echo '<span class="chip bad">📋 ' . $missingReqs . ' متطلب ناقص</span>';
+    if ((int)($b['uses_github'] ?? 0)) echo '<span class="chip ok">🐙 GitHub مربوط</span>';
     echo '</div>';
     if (!$hasZip) {
         echo '<form method="post" enctype="multipart/form-data" class="dropzone-form">' . csrf_field() . '<input type="hidden" name="m" value="boards"><input type="hidden" name="do" value="upload_panel"><input type="hidden" name="id" value="' . (int)$b['id'] . '">';
         echo '<label class="dropzone" data-dropzone><span>⬇ اسحب ملف اللوحة المضغوط هنا أو اضغط للاختيار (zip)</span><input type="file" name="panel_file" accept=".zip" required><span class="dz-file" data-dz-file></span><span class="dz-add" data-dz-add style="display:none"><button type="submit" class="btn sm">＋ إضافة</button></span></label></form>';
     }
-    echo '<div class="board-actions"><a class="btn ghost sm grow" href="' . e(adm_url('boards', ['edit' => $b['id']])) . '">' . ($hasZip ? 'فتح بيانات اللوحة' : 'إضافة بيانات اللوحة') . '</a></div>';
+    echo '<div class="board-actions"><a class="btn sm grow" href="' . e($panelUrl) . '">🎛 فتح لوحة تحكم التطبيق</a><a class="btn ghost sm" href="' . e(adm_url('boards', ['edit' => $b['id']])) . '">' . ($hasZip ? 'البيانات' : 'إضافة بيانات') . '</a></div>';
     echo '</article>';
 }
 
@@ -612,5 +801,6 @@ function boards_edit(int $id): void {
     f_ta('body', 'التعليق', '', 3);
     f_chk('approved', 'معتمد (ظاهر)', false);
     echo '<button class="btn sm" type="submit">إضافة تعليق</button></form></div>';
-    echo '<p><a class="btn ghost" href="' . e(adm_url('boards')) . '">← رجوع إلى لوحات الإدارة</a></p>';
+    echo '<p><a class="btn ghost" href="' . e(adm_url('boards')) . '">← رجوع إلى لوحات الإدارة</a> <a class="btn" href="' . e(boards_panel_url($id, 'overview')) . '">🎛 فتح لوحة تحكم التطبيق</a></p>';
+    boards_panel_fab();
 }

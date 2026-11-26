@@ -21,8 +21,18 @@ if ($nx !== '' && $nx[0] === '/' && !str_starts_with($nx, '//') && !preg_match('
 if (!admin_gate()) exit;                                // login / 2FA screens handled inside (exit when not authenticated)
 
 try { migrate_all(); } catch (Throwable $e) { adm_fatal('Migration failed: ' . $e->getMessage()); }
+team_ensure_primary();
+team_session_guard();
 $MODS = modules_load();
-$ADMIN = ['id' => (int)$_SESSION['admin_id'], 'name' => (string)$_SESSION['admin_name']];
+$ALL_MODS = $MODS;                                      // full registry (dashboard counters, links)
+$MODS = team_filter_modules($MODS);                     // only what the current account may open
+$ADMIN = [
+    'id'     => (int)$_SESSION['admin_id'],
+    'name'   => (string)$_SESSION['admin_name'],
+    'role'   => team_role(),
+    'role_label' => (team_roles()[team_role()] ?? team_roles()['editor'])['label'],
+    'owner'  => team_is_owner(),
+];
 
 /* ---------- POST: actions ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -31,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($do === 'logout') { audit('logout'); $_SESSION = []; session_destroy(); redirect(url('admin/')); }
     $mid = (string)($_POST['m'] ?? '');
     if (isset($MODS[$mid]['actions'][$do]) && is_callable($MODS[$mid]['actions'][$do])) {
+        if (!team_can_action($mid, $do)) { flash('لا تملك صلاحية تنفيذ هذا الإجراء (' . e($do) . ').', false); adm_back('dashboard'); }
         try { ($MODS[$mid]['actions'][$do])(); }
         catch (Throwable $e) { error_log('[admin:' . $mid . '/' . $do . '] ' . $e->getMessage()); flash('خطأ: ' . (cfg('debug') ? $e->getMessage() : 'راجع data/php-error.log'), false); }
         adm_back($mid);
@@ -40,7 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /* ---------- GET: view ---------- */
 $cur = (string)($_GET['m'] ?? 'dashboard');
-if ($cur !== 'dashboard' && !isset($MODS[$cur])) $cur = 'dashboard';
+if ($cur !== 'dashboard' && !isset($ALL_MODS[$cur])) $cur = 'dashboard';
+if ($cur !== 'dashboard' && !isset($MODS[$cur])) {
+    adm_head('dashboard');
+    adm_h('صلاحية غير كافية', 'هذا التبويب غير متاح لدورك الحالي (' . $ADMIN['role_label'] . '). تواصل مع امبراطور السحر يوسف لمنحك الصلاحية.');
+    echo '<div class="note bad">🚫 لا تملك صلاحية فتح «' . e(adm_title($ALL_MODS[$cur])) . '».</div>';
+    echo '<div class="row"><a class="btn" href="' . adm_url('dashboard') . '">⌂ الرئيسية</a></div>';
+    adm_foot();
+    exit;
+}
 if ($cur !== 'dashboard' && isset($MODS[$cur]['download']) && isset($_GET['dl'])) { ($MODS[$cur]['download'])((string)$_GET['dl']); exit; }
 
 adm_head($cur);
