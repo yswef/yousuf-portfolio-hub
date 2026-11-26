@@ -21,8 +21,10 @@ function page_start(array $m = []): void {
     $path = fn(string $l) => site_origin() . '/' . $l . '/' . ($rest !== '' ? $rest : '');
     $dir = lang_dir();
     $nav = ['home' => '', 'about' => 'about', 'resume' => 'resume', 'projects' => 'projects', 'apps' => 'apps', 'services' => 'services'];
-    if (setting('show_blog', '0') === '1') $nav['blog'] = 'blog';       // blog tab is hidden unless enabled in Settings
-    $nav += ['library' => 'library', 'docs' => 'docs', 'contact' => 'contact'];
+    if (setting('show_blog', '0') === '1') $nav['blog'] = 'blog';
+    try { if (table_exists('sites') && (int)val('SELECT COUNT(*) FROM sites') > 0) $nav['library'] = 'library'; } catch (Throwable $e) {}
+    try { if (table_exists('docs') && (int)val('SELECT COUNT(*) FROM docs WHERE hidden=0') > 0) $nav['docs'] = 'docs'; } catch (Throwable $e) {}
+    $nav['contact'] = 'contact';
     $first = explode('/', $rest)[0];
     $img = !empty($m['image']) ? $m['image'] : site_origin() . '/assets/img/favicon-192.png';
     ?>
@@ -45,7 +47,7 @@ function page_start(array $m = []): void {
 <meta name="theme-default" content="<?= e(setting('theme_default', 'system')) ?>">
 <link rel="icon" href="<?= url('assets/img/favicon.ico') ?>"><link rel="icon" type="image/png" sizes="32x32" href="<?= url('assets/img/favicon-32.png') ?>">
 <link rel="apple-touch-icon" href="<?= url('assets/img/favicon-192.png') ?>"><link rel="manifest" href="<?= url('manifest.webmanifest') ?>">
-<link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('assets/css/style.css') ?>?v=3">
+<link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('assets/css/style.css') ?>?v=4">
 <script src="<?= url('assets/js/theme.js') ?>"></script>
 <?php if (!empty($m['jsonld'])): ?><script type="application/ld+json"><?= json_encode($m['jsonld'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script><?php endif; ?>
 </head>
@@ -81,7 +83,7 @@ function page_end(): void {
   <?php if ($links): ?><div class="foot-links"><?php foreach ($links as $l): if (!($u = safe_url((string)$l['extra']))) continue; ?><a href="<?= e($u) ?>" target="_blank" rel="noopener noreferrer me" title="<?= e(tr($l, 'title')) ?>"><?= e($l['icon']) ?> <?= e(tr($l, 'title')) ?></a><?php endforeach; ?></div><?php endif; ?>
   <div class="foot-nav"><a href="<?= lurl('learning') ?>"><?= e(t('nav_learning')) ?></a><a href="<?= lurl('social') ?>"><?= e(t('nav_social')) ?></a><a href="<?= lurl('privacy') ?>"><?= e(t('nav_privacy')) ?></a>
     <?php foreach (LANGS as $l => $inf): if ($l === cur_lang()) continue; ?><a hreflang="<?= $l ?>" href="<?= e(lurl($GLOBALS['REST'] ?? '', $l)) ?>"><?= e($inf['name']) ?></a><?php endforeach; ?></div>
-  <p>© <?= gmdate('Y') ?> <?= e(setting_l('name')) ?> · <?= e(t('rights')) ?> · <?= e(t('no_tracking')) ?></p>
+  <p>© <?= gmdate('Y') ?> <?= e(setting_l('name')) ?> · <?= e(t('rights')) ?></p>
 </footer>
 <script src="<?= url('assets/js/app.js') ?>?v=3" defer></script>
 </body>

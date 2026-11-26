@@ -75,12 +75,13 @@ return [
         }
     },
     'view' => function (array $mod): void {
-        adm_h('مولّد مفاتيح التطبيقات', 'ولّد مفاتيح ترخيص / API / أجهزة دفعة واحدة، واربطها بتطبيق من لوحات الإدارة إن أردت.');
+        adm_h('مولّد مفاتيح التطبيقات');
         $boards = key_boards_opts();
+        $preBoard = (int)($_GET['board_id'] ?? 0);
         echo '<div class="panel"><h2>توليد مفاتيح جديدة</h2>';
         f_open('appkeys', 'generate', [], false, 'form');
         echo '<div class="two">';
-        f_sel('board_id', 'التطبيق (اختياري)', $boards, 0);
+        f_sel('board_id', 'التطبيق (اختياري)', $boards, $preBoard);
         f_sel('key_type', 'نوع المفتاح', KEY_TYPES, 'license');
         f_in('prefix', 'البادئة (مثال: LIC)', 'LIC', 'text', 'dir="ltr" maxlength="10"');
         f_in('key_len', 'طول المفتاح (8-32)', '16', 'number', 'dir="ltr" min="8" max="32"');

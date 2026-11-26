@@ -49,9 +49,9 @@ return [
         }
     },
     'view' => function (array $mod): void {
-        adm_h('فحص النظام والنسخ الاحتياطي', 'عند ظهور أي خطأ: نزّل تقرير الفحص وأرسله لمن يساعدك — لا يحتوي كلمات مرور ولا مفاتيح.');
-        echo '<div class="row" style="margin-bottom:14px"><a class="btn" href="' . adm_url('health', ['dl' => 'report']) . '">⬇ تقرير الفحص (txt)</a><a class="btn ghost" href="' . adm_url('health', ['dl' => 'backup']) . '">⬇ نسخة احتياطية للمحتوى (JSON)</a>';
-        btn_post('health', 'test_github', [], 'اختبار الاتصال بـ GitHub'); btn_post('health', 'clear_log', [], 'تفريغ سجل الأخطاء', 'btn ghost sm', 'تفريغ السجل؟'); echo '</div>';
+        adm_h('فحص النظام');
+        echo '<div class="row" style="margin-bottom:14px"><a class="btn" href="' . adm_url('health', ['dl' => 'report']) . '">⬇ تقرير الفحص (txt)</a><a class="btn ghost" href="' . adm_url('health', ['dl' => 'backup']) . '">⬇ تصدير المحتوى (JSON)</a>';
+        btn_post('health', 'test_github', [], 'اختبار GitHub API'); btn_post('health', 'clear_log', [], 'تفريغ سجل الأخطاء', 'btn ghost sm', 'تفريغ السجل؟'); echo '</div>';
 
         $q = trim((string)($_GET['q'] ?? ''));
         $st = (string)($_GET['st'] ?? '');

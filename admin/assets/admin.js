@@ -153,4 +153,15 @@
       form.submit();
     });
   });
+
+  // instant search inside Site Guide (تعليمات الموقع)
+  $$('[data-guide-filter]').forEach(function (inp) {
+    var items = $$('[data-guide-item]');
+    inp.addEventListener('input', function () {
+      var q = inp.value.trim().toLowerCase();
+      items.forEach(function (el) {
+        el.style.display = (!q || (el.getAttribute('data-search') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    });
+  });
 })();

@@ -52,9 +52,11 @@ function project_card(array $p): void {
 <?php }
 function app_card(array $a): void {
     $price = t($a['price_type'] === 'paid' ? 'paid' : ($a['price_type'] === 'donation' ? 'donation' : 'free'));
-    $dlTotal = (int)($a['dl_total'] ?? 0); ?>
-<a class="card tilt reveal" href="<?= lurl('apps/' . $a['slug']) ?>" data-search="<?= e(mb_strtolower($a['name'] . ' ' . $a['description'] . ' ' . $a['platform'])) ?>" data-tag="<?= e(mb_strtolower((string)$a['platform'])) ?>">
-  <div class="icon">⬇</div><h3><?= e($a['name']) ?></h3><p><?= e(mb_substr((string)$a['description'], 0, 140)) ?></p>
+    $dlTotal = (int)($a['dl_total'] ?? 0);
+    $dispName = (!$a['locked'] && !empty($a['p_title_i18n'])) ? L((string)$a['p_title_i18n'], (string)$a['name']) : (string)$a['name'];
+    $dispDesc = (!$a['locked'] && !empty($a['p_desc_i18n'])) ? L((string)$a['p_desc_i18n'], (string)$a['description']) : (string)$a['description']; ?>
+<a class="card tilt reveal" href="<?= lurl('apps/' . $a['slug']) ?>" data-search="<?= e(mb_strtolower($dispName . ' ' . $dispDesc . ' ' . $a['platform'])) ?>" data-tag="<?= e(mb_strtolower((string)$a['platform'])) ?>">
+  <div class="icon">⬇</div><h3><?= e($dispName) ?></h3><p><?= e(mb_substr($dispDesc, 0, 140)) ?></p>
   <div class="meta"><?php if ($a['platform']): ?><span class="chip"><?= e($a['platform']) ?></span><?php endif; ?><?php if ($a['version']): ?><span dir="ltr"><?= e($a['version']) ?></span><?php endif; ?><span class="chip alt"><?= e($price) ?></span><?php if ($dlTotal > 0): ?><span>↓ <?= $dlTotal ?></span><?php endif; ?></div>
 </a>
 <?php }
