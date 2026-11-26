@@ -10,7 +10,10 @@ function adm_back(string $m = 'dashboard', array $q = []): never { redirect(adm_
 function flash(string $msg, bool $ok = true): void { $_SESSION['flash'] = [$msg, $ok]; }
 function adm_fatal(string $msg): never {
     http_response_code(500);
-    echo '<!doctype html><meta charset="utf-8"><body style="font:16px system-ui;background:#14110f;color:#eee;padding:30px"><h2>خطأ</h2><pre style="white-space:pre-wrap">' . e($msg) . '</pre>';
+    echo '<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+       . '<body style="font:16px system-ui,Tahoma,sans-serif;background:#14110f;color:#eee;padding:24px;margin:0;max-width:100%;overflow-x:hidden">'
+       . '<h2 style="margin:0 0 10px">خطأ</h2><pre style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%;background:#0b1622;border:1px solid #1e3346;border-radius:12px;padding:14px;font-size:.82rem">' . e($msg) . '</pre>'
+       . '<p style="margin-top:14px"><a href="' . e(adm_url('')) . '" style="color:#2dd4bf">العودة للوحة التحكم</a></p>';
     exit;
 }
 function adm_title(array $m): string { return $m['title']['ar'] ?? $m['title']['en'] ?? $m['id']; }
@@ -18,7 +21,7 @@ function adm_title(array $m): string { return $m['title']['ar'] ?? $m['title']['
 function adm_page_open(string $title): void {
     ?><!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title><?= e($title) ?></title>
-<link rel="icon" href="<?= url('assets/img/favicon-32.png') ?>"><link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('admin/assets/admin.css') ?>?v=3"></head><?php
+<link rel="icon" href="<?= url('assets/img/favicon-32.png') ?>"><link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('admin/assets/admin.css') ?>?v=4"></head><?php
 }
 function adm_login_page(string $step, string $err): void {
     adm_page_open('تسجيل الدخول');
@@ -65,6 +68,7 @@ function adm_head(string $cur): void {
 </aside>
 <main class="main">
 <?php if (!empty($_SESSION['flash'])): [$fm, $fo] = $_SESSION['flash']; unset($_SESSION['flash']); ?><div class="note <?= $fo ? 'ok' : 'bad' ?>"><?= e($fm) ?></div><?php endif;
+    echo update_admin_overlay();
 }
 function adm_foot(): void { echo '</main></div><script src="' . url('admin/assets/admin.js') . '?v=5" defer></script></body></html>'; }
 function adm_h(string $t, string $sub = ''): void { echo '<header class="ph"><h1>' . e($t) . '</h1>' . ($sub !== '' ? '<p class="muted">' . e($sub) . '</p>' : '') . '</header>'; }

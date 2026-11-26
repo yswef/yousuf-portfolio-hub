@@ -47,7 +47,7 @@ function page_start(array $m = []): void {
 <meta name="theme-default" content="<?= e(setting('theme_default', 'system')) ?>">
 <link rel="icon" href="<?= url('assets/img/favicon.ico') ?>"><link rel="icon" type="image/png" sizes="32x32" href="<?= url('assets/img/favicon-32.png') ?>">
 <link rel="apple-touch-icon" href="<?= url('assets/img/favicon-192.png') ?>"><link rel="manifest" href="<?= url('manifest.webmanifest') ?>">
-<link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('assets/css/style.css') ?>?v=4">
+<link rel="stylesheet" href="<?= url('assets/css/fonts.css') ?>"><link rel="stylesheet" href="<?= url('assets/css/style.css') ?>?v=5">
 <script src="<?= url('assets/js/theme.js') ?>"></script>
 <?php if (!empty($m['jsonld'])): ?><script type="application/ld+json"><?= json_encode($m['jsonld'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script><?php endif; ?>
 </head>

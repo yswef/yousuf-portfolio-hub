@@ -224,3 +224,11 @@ html.js .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,tran
 @media print{.navbar,.site-footer,.no-print,.banner,.cursor-glow,.cur,.cur-r,.mobile-drawer,.pub-toolbar{display:none!important}body{background:#fff;color:#000}html.js .reveal{opacity:1;transform:none}.page-head{padding-top:20px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html.js .reveal{opacity:1;transform:none}}
 .page-head+section{padding-top:30px}
+
+/* ---- mobile hardening: no horizontal overflow, ever ---- */
+html{max-width:100%;overflow-x:hidden}
+body{max-width:100%;overflow-x:clip}
+img,video,canvas,iframe,svg,table{max-width:100%;height:auto}
+pre,code,.sha,.lead,.section-sub,p,li,h1,h2,h3,h4,summary{overflow-wrap:anywhere;word-break:break-word}
+.container,.narrow,.grid,.projects-grid,.hero-grid,.about-grid,.contact-grid{min-width:0;max-width:100%}
+@media(max-width:400px){.btn{width:100%;justify-content:center}.row{flex-direction:column;align-items:stretch}}
