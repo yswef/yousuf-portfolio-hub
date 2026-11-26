@@ -8,13 +8,18 @@ if (!is_file(ROOT . '/config.php')) {
 }
 require ROOT . '/app/layout.php';
 require ROOT . '/app/parts.php';
-send_security_headers();
 
 $uri = rawurldecode((string)(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/'));
 $b = base();
 if ($b !== '' && str_starts_with($uri, $b)) $uri = substr($uri, strlen($b));
 $segs = array_values(array_filter(explode('/', trim($uri, '/')), 'strlen'));
 $top = $segs[0] ?? '';
+
+// Mother Panel JSON API gateway: /api/... is ALWAYS JSON (never HTML, even on errors)
+if ($top === 'api') {
+    app_api_dispatch(implode('/', array_slice($segs, 1)));
+}
+send_security_headers();
 
 try {
     /* ---- language-less routes ---- */

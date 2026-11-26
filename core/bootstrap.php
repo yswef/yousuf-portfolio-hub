@@ -8,7 +8,7 @@ if (!defined('ROOT')) define('ROOT', dirname(__DIR__));
 mb_internal_encoding('UTF-8');
 date_default_timezone_set('UTC');
 
-foreach (['helpers', 'db', 'security', 'i18n', 'autotranslate', 'markdown', 'upload', 'totp', 'migrate', 'sites', 'backup'] as $f) require __DIR__ . '/' . $f . '.php';
+foreach (['helpers', 'db', 'security', 'i18n', 'autotranslate', 'markdown', 'upload', 'totp', 'mother_schema', 'team', 'handoff', 'app_api', 'mother_verify', 'migrate', 'sites', 'backup'] as $f) require __DIR__ . '/' . $f . '.php';
 
 // Errors: never shown to visitors; written to data/php-error.log (set 'debug' => true in config.php to display).
 ini_set('log_errors', '1');

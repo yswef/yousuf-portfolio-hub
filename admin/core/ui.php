@@ -59,13 +59,14 @@ function adm_head(string $cur): void {
   </nav>
   <div class="side-bot">
     <a href="<?= url('') ?>" target="_blank" rel="noopener">↗ عرض الموقع</a>
-    <form method="post"><?= csrf_field() ?><input type="hidden" name="do" value="logout"><button class="link">⎋ خروج (<?= e($_SESSION['admin_name'] ?? '') ?>)</button></form>
+    <div class="who"><b><?= e((team_roles()[team_role()] ?? ['icon' => '•'])['icon'] ?? '•') ?> <?= e($_SESSION['admin_name'] ?? '') ?></b><span><?= e((team_roles()[team_role()] ?? ['label' => ''])['label']) ?></span></div>
+    <form method="post"><?= csrf_field() ?><input type="hidden" name="do" value="logout"><button class="link">⎋ خروج</button></form>
   </div>
 </aside>
 <main class="main">
 <?php if (!empty($_SESSION['flash'])): [$fm, $fo] = $_SESSION['flash']; unset($_SESSION['flash']); ?><div class="note <?= $fo ? 'ok' : 'bad' ?>"><?= e($fm) ?></div><?php endif;
 }
-function adm_foot(): void { echo '</main></div><script src="' . url('admin/assets/admin.js') . '?v=4" defer></script></body></html>'; }
+function adm_foot(): void { echo '</main></div><script src="' . url('admin/assets/admin.js') . '?v=5" defer></script></body></html>'; }
 function adm_h(string $t, string $sub = ''): void { echo '<header class="ph"><h1>' . e($t) . '</h1>' . ($sub !== '' ? '<p class="muted">' . e($sub) . '</p>' : '') . '</header>'; }
 
 /* ---------- form helpers ---------- */

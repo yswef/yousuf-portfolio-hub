@@ -154,6 +154,39 @@
     });
   });
 
+
+  // GitHub token: reveal + copy (Settings and per-app panel). The full value lives in a hidden input only on admin pages.
+  $$('[data-gh-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var box = b.closest('.row, .panel') || document;
+      var full = box.querySelector('[data-gh-full]');
+      if (!full || !full.value) return;
+      var val = full.value, done = function () {
+        var old = b.textContent; b.textContent = '✓ نُسخ';
+        setTimeout(function () { b.textContent = old; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(val).then(done, fallback); else fallback();
+      function fallback() {
+        var t = document.createElement('textarea'); t.value = val; t.style.position = 'fixed'; t.style.opacity = '0';
+        document.body.appendChild(t); t.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(t); done();
+      }
+    });
+  });
+  $$('[data-gh-reveal]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var box = b.closest('.row, .panel') || document;
+      var full = box.querySelector('[data-gh-full]'), mask = box.querySelector('[data-gh-mask]');
+      if (!full || !mask) return;
+      var shown = mask.getAttribute('data-shown') === '1';
+      if (shown) { mask.textContent = mask.getAttribute('data-mask') || '••••'; mask.setAttribute('data-shown', '0'); b.textContent = '👁 إظهار'; }
+      else {
+        mask.setAttribute('data-mask', mask.textContent); mask.textContent = full.value; mask.setAttribute('data-shown', '1'); b.textContent = '🙈 إخفاء';
+      }
+    });
+  });
+
   // instant search inside Site Guide (تعليمات الموقع)
   $$('[data-guide-filter]').forEach(function (inp) {
     var items = $$('[data-guide-item]');

@@ -154,10 +154,24 @@ return [
         f_sel('apps_sort', 'الترتيب الافتراضي لعرض التطبيقات', SET_APPS_SORTS, setting('apps_sort', 'newest'));
         echo '</div>';
         foreach (SET_FLAGS as $k => [$lab, $def]) f_chk($k, $lab, setting($k, $def) === '1');
-        $tk = gh_token();
+        $tk = gh_token(); $gi = mother_github_token_info();
         echo '</div><div class="panel"><h2>GitHub</h2>'; f_in('github_user', 'مستخدم GitHub', gh_user(), 'text', 'dir="ltr"');
-        f_in('github_token', 'التوكن (يرفع الحد من 60 إلى 5000 طلب/ساعة) — ' . ($tk !== '' ? 'مضبوط ••••' . substr($tk, -4) . ' · اتركه فارغاً للإبقاء عليه' : 'غير مضبوط'), '', 'password', 'dir="ltr" autocomplete="new-password"');
+        f_in('github_token', 'توكن GitHub (يرفع الحد من 60 إلى 5000 طلب/ساعة + يخدم كل تطبيق يتعامل مع المستودعات) — ' . ($tk !== '' ? 'مضبوط ••••' . substr($tk, -4) . ' · اتركه فارغاً للإبقاء عليه' : 'غير مضبوط'), '', 'password', 'dir="ltr" autocomplete="new-password"');
         if ($tk !== '') f_chk('gh_token_remove', 'حذف التوكن المحفوظ', false);
+        if ($gi['set']) {
+            echo '<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 10px">'
+               . '<span class="chip ok">🔑 جاهز للتطبيقات</span>'
+               . '<code dir="ltr" data-gh-mask style="padding:6px 10px;border-radius:10px;background:#0b1622;border:1px solid #1e3346">' . e($gi['hint']) . '</code>';
+            if (function_exists('mother_github_token_can_view') && mother_github_token_can_view()) {
+                echo '<button type="button" class="btn sm ghost" data-gh-reveal>👁 إظهار</button>'
+                   . '<button type="button" class="btn sm" data-gh-copy>⧉ نسخ</button>'
+                   . '</div><input type="hidden" data-gh-full value="' . e(mother_github_token()) . '">';
+            } else {
+                echo '<span class="chip">🔒 الكشف والنسخ للمالك فقط</span></div>';
+            }
+            echo '<span class="muted" dir="ltr">' . e($gi['source']) . '</span>';
+        }
+        echo '<p class="muted">هذا التوكن واحد لكل اللوحة الأم: التطبيقات التي تدير مستودعات GitHub تطلبه من الخادم عبر <code dir="ltr">/api/v1/control?op=github_token</code> لحساب أدمن فقط — ولا يُحفظ أبداً داخل الـ APK. يمكنك نسخه في أي وقت من هنا أو من تبويب إعدادات لوحة التطبيق.</p>';
         echo '</div><div class="panel"><h2>محركات البحث</h2>'; f_in('google_verify', 'Google Search Console (قيمة content)', setting('google_verify'), 'text', 'dir="ltr"'); f_in('bing_verify', 'Bing Webmaster (قيمة content)', setting('bing_verify'), 'text', 'dir="ltr"');
         echo '</div><div class="row"><button class="btn" type="submit">حفظ الإعدادات</button></div></form>';
     },
