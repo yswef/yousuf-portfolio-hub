@@ -55,10 +55,10 @@ function modules_load(): array {
 /** Creates/updates all tables (core + modules) and runs each module's seed once. Returns a log. */
 function migrate_all(): array {
     $log = []; $T = schema_types();
-    $coreV = 1;
+    $coreV = 2;
     if ((int)setting('mv__core', '0') < $coreV) {
-        run_sql_list(core_schema($T), $log, 'core');
-        set_setting('mv__core', (string)$coreV); $log[] = 'core: ok';
+        run_sql_list(array_merge(core_schema($T), mother_panel_schema($T)), $log, 'core');
+        set_setting('mv__core', (string)$coreV); $log[] = 'core: v2 ok';
     }
     foreach (modules_load() as $id => $m) {
         $have = (int)setting('mv_' . $id, '0');
@@ -67,6 +67,13 @@ function migrate_all(): array {
         if ($have === 0 && isset($m['seed'])) ($m['seed'])();
         set_setting('mv_' . $id, (string)$m['version']);
         $log[] = "$id: v{$m['version']} ok";
+    }
+    // Mother Panel: ensure boards carries the unified app_id-scoped columns on every run (idempotent)
+    try { mother_ensure_boards_columns(); } catch (Throwable $e) { $log[] = 'mother_cols: ' . $e->getMessage(); }
+    if ((int)setting('mv__mother_seed', '0') < 1) {
+        mother_panel_seed();
+        set_setting('mv__mother_seed', '1');
+        $log[] = 'mother_seed: ok';
     }
     return $log;
 }

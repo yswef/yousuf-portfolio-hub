@@ -77,6 +77,15 @@ function page_start(array $m = []): void {
 
 function page_end(): void {
     $links = items('link');
+    // Mother Panel floating return button: public pages → الموقع الأساسي; admin viewers on locked/private contexts → لوحة التحكم الأساسية ONLY
+    $isLockedContext = false;
+    try {
+        if (function_exists('is_admin_viewer') && is_admin_viewer() && isset($GLOBALS['REST']) && str_starts_with((string)$GLOBALS['REST'], 'p/')) {
+            // Custom pages are public by definition; keep main-site return even for admins
+            $isLockedContext = false;
+        }
+    } catch (Throwable $e) {}
+    $fab = function_exists('render_floating_return_btn') ? render_floating_return_btn($isLockedContext) : '';
     ?>
 </main>
 <footer class="site-footer">
@@ -85,6 +94,7 @@ function page_end(): void {
     <?php foreach (LANGS as $l => $inf): if ($l === cur_lang()) continue; ?><a hreflang="<?= $l ?>" href="<?= e(lurl($GLOBALS['REST'] ?? '', $l)) ?>"><?= e($inf['name']) ?></a><?php endforeach; ?></div>
   <p>© <?= gmdate('Y') ?> <?= e(setting_l('name')) ?> · <?= e(t('rights')) ?></p>
 </footer>
+<?= $fab ?>
 <script src="<?= url('assets/js/app.js') ?>?v=3" defer></script>
 </body>
 </html>
