@@ -47,7 +47,9 @@ if ($tiles): ?><div class="kpis"><?php foreach ($tiles as $w): ?>
   <a class="btn ghost" href="<?= e(adm_url('projects', ['edit' => 0])) ?>">＋ مشروع جديد</a>
   <a class="btn ghost" href="<?= e(adm_url('apps', ['edit' => 0])) ?>">＋ تطبيق جديد</a>
   <a class="btn ghost" href="<?= e(adm_url('settings')) ?>">⚙ الإعدادات والترجمة</a>
+  <a class="btn ghost" href="<?= e(adm_url('updater')) ?>">🔄 تحديث الموقع</a>
   <a class="btn ghost" href="<?= e(adm_url('backup')) ?>">💾 النسخ الاحتياطي</a>
+  <a class="btn ghost" href="<?= e(adm_url('guide')) ?>">📖 تعليمات الموقع</a>
 </div></div>
 
 <?php

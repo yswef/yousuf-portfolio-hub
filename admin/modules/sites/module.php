@@ -107,14 +107,14 @@ return [
         },
     ],
     'view' => function (array $mod): void {
-        adm_h('المواقع المنشورة', 'مواقع تعليمية وخطط وكورسات (html/zip) تُخزَّن في مجلد خاص لكل موقع وتظهر كبطاقات في صفحة «المكتبة». ملفات php لا تُنفَّذ ولا تُخزَّن.');
-        $lim = 'حدّ الرفع في استضافتك: ' . ini_get('upload_max_filesize') . ' (post: ' . ini_get('post_max_size') . ')';
+        adm_h('المواقع المنشورة');
+        $lim = 'حد الرفع: ' . ini_get('upload_max_filesize') . ' (post: ' . ini_get('post_max_size') . ')';
         if (isset($_GET['edit'])) { sites_edit((int)$_GET['edit'], $lim); return; }
-        echo '<div class="panel"><h2>نشر مواقع / صفحات</h2><p class="muted">كل ملف zip = موقع كامل بطاقته تفتح ملف index. كل ملف html = صفحة منفردة. يمكنك اختيار عدة ملفات دفعة واحدة وكل ملف يصير بطاقة مستقلة.</p>'; f_open('sites', 'site_upload', [], true, 'form');
-        f_in('site_file[]', 'الملفات: zip (موقع كامل) و/أو html (صفحة واحدة)', '', 'file', 'required multiple accept=".zip,.html,.htm"');
-        f_in('title', 'اسم البطاقة (عند رفع ملف واحد فقط — وإلا يُؤخذ من اسم الملف)', '', 'text', 'maxlength="190"');
-        f_ta('description', 'وصف قصير يظهر في البطاقة (عند رفع ملف واحد)', '', 2, 'maxlength="1000"');
-        f_chk('is_public', 'قابل للنشر للجميع (وإلا يظهر مقفلاً ولا يفتحه إلا المدير)', false);
+        echo '<div class="panel"><h2>نشر مواقع / صفحات</h2>'; f_open('sites', 'site_upload', [], true, 'form');
+        f_in('site_file[]', 'الملفات: zip (موقع كامل) أو html (صفحة منفردة)', '', 'file', 'required multiple accept=".zip,.html,.htm"');
+        f_in('title', 'اسم البطاقة (اختياري)', '', 'text', 'maxlength="190"');
+        f_ta('description', 'وصف مختصر (اختياري)', '', 2, 'maxlength="1000"');
+        f_chk('is_public', 'عام للجميع (غير مفعّل = للمدير فقط)', false);
         echo '<p class="muted hint">' . e($lim) . '</p><div class="row"><button class="btn" type="submit">رفع ونشر</button>'; sites_copy_btn(sites_brand_css(), '🎨 نسخ ألوان الهوية'); echo '</div></form></div>';
 
         $q = trim((string)($_GET['q'] ?? ''));

@@ -81,6 +81,12 @@ return crud_module([
             ['label' => '', 'fmt' => fn($r) => $r['image'] ? '<img class="thumb" src="' . e(upload_url($r['image'])) . '" alt="">' : ''],
             ['label' => 'الاسم', 'fmt' => fn($r) => '<b>' . e($r['name']) . '</b>' . ($r['language'] ? '<br><span class="chip">' . e($r['language']) . '</span>' : '')],
             ['label' => 'المصدر', 'fmt' => fn($r) => $r['gh_id'] ? '<span class="chip ok">GitHub</span>' : '<span class="chip">يدوي</span>'],
+            ['label' => 'تطبيق', 'fmt' => function ($r): string {
+                if (!table_exists('apps')) return '';
+                $a = row('SELECT id, ignored FROM apps WHERE project_id=?', [$r['id']]);
+                if ($a && !$a['ignored']) return '<a class="chip ok" href="' . e(adm_url('apps', ['edit' => $a['id']])) . '">⬇ تطبيق</a>';
+                return '<form method="post" class="inline">' . csrf_field() . '<input type="hidden" name="m" value="projects"><input type="hidden" name="do" value="make_app"><input type="hidden" name="id" value="' . (int)$r['id'] . '"><button class="btn ghost sm" type="submit">＋ لتطبيق</button></form>';
+            }],
             ['label' => 'مميّز', 'fmt' => fn($r) => $r['featured'] ? '★' : ''],
             ['label' => 'مخفي', 'fmt' => fn($r) => $r['hidden'] ? '🚫' : ''],
             ['label' => 'نجوم', 'fmt' => fn($r) => '★ ' . (int)$r['stars']],
@@ -92,23 +98,46 @@ return crud_module([
         $log = rows('SELECT * FROM sync_log ORDER BY id DESC LIMIT 5');
         $curPubSort = setting('projects_sort', 'custom');
         echo '<div class="cols" style="margin-bottom:18px">';
-        echo '<div class="panel" style="margin-bottom:0"><h2>المزامنة مع GitHub</h2><p class="muted">المستخدم: <b dir="ltr">' . e(gh_user() ?: '—') . '</b> · التوكن: '
-           . (gh_token() !== '' ? 'مضبوط' : 'غير مضبوط (حد 60 طلب/ساعة)') . ($pending ? " · مشاريع لم تُفحص بعد: $pending" : '') . '</p>';
-        f_open('projects', 'sync'); f_chk('force', 'مزامنة كاملة (إعادة جلب README والإصدارات)', false);
+        echo '<div class="panel" style="margin-bottom:0"><h2>المزامنة مع GitHub</h2><p class="muted">الحساب: <b dir="ltr">' . e(gh_user() ?: '—') . '</b> · التوكن: '
+           . (gh_token() !== '' ? 'مضبوط ✓' : 'غير مضبوط (60 طلب/ساعة)') . ($pending ? " · بانتظار الفحص: $pending" : '') . '</p>';
+        f_open('projects', 'sync'); f_chk('force', 'إعادة فحص شاملة (README والإصدارات)', false);
         echo '<button class="btn" type="submit">🔄 مزامنة الآن</button></form>';
         if ($log) { echo '<div class="tw" style="margin-top:12px"><table>'; foreach ($log as $l) echo '<tr><td>' . e(ts_fmt($l['ts'])) . '</td><td>' . ($l['ok'] ? '✓' : '⚠') . '</td><td dir="ltr">' . e($l['summary']) . '</td></tr>'; echo '</table></div>'; }
         echo '</div>';
 
-        echo '<div class="panel" style="margin-bottom:0"><h2>ترتيب عرض المستودعات في الموقع</h2><p class="muted">اختر كيف يظهر ترتيب المستودعات افتراضياً للزوار في صفحة المشاريع والرئيسية (ويمكن للزائر أيضاً تبديل الترتيب أثناء التصفح).</p>';
+        echo '<div class="panel" style="margin-bottom:0"><h2>ترتيب العرض في الموقع</h2>';
         f_open('projects', 'save_display_sort');
-        f_sel('projects_sort', 'طريقة الترتيب الافتراضية في العرض العام', PROJ_PUBLIC_SORTS, $curPubSort);
-        echo '<button class="btn ghost" type="submit">حفظ طريقة العرض</button></form></div>';
+        f_sel('projects_sort', 'الترتيب الافتراضي للزوار', PROJ_PUBLIC_SORTS, $curPubSort);
+        echo '<button class="btn ghost" type="submit">حفظ</button></form></div>';
         echo '</div>';
     },
     'extra_actions' => [
         'sync' => function (): void {
             [$ok, $sum] = sync_and_log(PB('force') === 1);
             audit('sync', $sum); flash(($ok ? 'اكتملت المزامنة: ' : 'فشلت المزامنة: ') . $sum, $ok);
+        },
+        'make_app' => function (): void {
+            $p = row('SELECT * FROM projects WHERE id=?', [PN('id')]);
+            if (!$p || !table_exists('apps')) return;
+            $ex = row('SELECT id FROM apps WHERE project_id=?', [$p['id']]);
+            if ($ex) { upd('apps', ['ignored' => 0, 'hidden' => 0], 'id=?', [$ex['id']]); $aid = (int)$ex['id']; }
+            else {
+                $aid = ins('apps', [
+                    'project_id' => $p['id'], 'slug' => unique_slug('apps', slugify($p['name'])),
+                    'name' => $p['name'], 'description' => (string)$p['description'],
+                    'platform' => detect_app_platform([], ['name' => $p['name'], 'description' => $p['description'], 'language' => $p['language'], 'topics' => explode(',', (string)$p['topics'])]),
+                    'version' => extract_version_from_readme((string)$p['readme']) ?: 'latest',
+                    'release_url' => (string)$p['html_url'], 'published_at' => (string)($p['pushed_at'] ?: gmdate('c')), 'created' => time(),
+                ]);
+                if (!empty($p['download_url']) && preg_match('#^https://#i', (string)$p['download_url'])) {
+                    ins('app_files', ['app_id' => $aid, 'name' => basename((string)parse_url((string)$p['download_url'], PHP_URL_PATH)) ?: ($p['slug'] . '.zip'), 'label' => 'تنزيل مباشر', 'kind' => 'portable', 'size' => 0, 'url' => (string)$p['download_url']]);
+                } elseif (!empty($p['html_url']) && preg_match('#^https://github\.com/([^/]+)/([^/]+)#i', (string)$p['html_url'], $m)) {
+                    ins('app_files', ['app_id' => $aid, 'gh_asset_id' => -(int)$p['id'], 'name' => $m[2] . '-main.zip', 'label' => 'حزمة التطبيق (ZIP)', 'kind' => 'portable', 'size' => 0, 'url' => "https://github.com/{$m[1]}/{$m[2]}/archive/refs/heads/main.zip"]);
+                }
+            }
+            audit('project_make_app', (string)$p['id']);
+            flash('تم تفعيل المشروع كتطبيق قابل للتنزيل.');
+            adm_back('apps', ['edit' => $aid]);
         },
         'save_display_sort' => function (): void {
             $s = array_key_exists(P('projects_sort'), PROJ_PUBLIC_SORTS) ? P('projects_sort') : 'custom';

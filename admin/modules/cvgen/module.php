@@ -6,7 +6,10 @@ declare(strict_types=1);
  */
 const CV_TEMPLATES = ['modern' => 'عصري (أورورا فيروزي)', 'executive' => 'تنفيذي (كحلي داكن)', 'classic' => 'كلاسيكي (رمادي رسمي)', 'minimal' => 'بسيط (أحادية اللون)'];
 
-function cv_lines(string $t): array { return array_values(array_filter(array_map('trim', preg_split('/\R/', $t) ?: []), fn($x) => $x !== '')); }
+function cv_lines(string $t): array {
+    $norm = str_replace(["\r\n", "\r"], "\n", $t);
+    return array_values(array_filter(array_map('trim', explode("\n", $norm)), fn($x) => $x !== ''));
+}
 
 /** Build pre-filled CV fields from existing portfolio tables (settings, items, projects). */
 function cv_from_portfolio(string $lang = 'ar'): array {
@@ -42,9 +45,18 @@ function cv_from_portfolio(string $lang = 'ar'): array {
             $projs[] = $pt . ($pd !== '' ? ' — ' . mb_substr($pd, 0, 120) : '');
         }
     }
+    $email = ''; $phone = ''; $siteUrl = site_origin();
+    if (table_exists('items')) {
+        foreach (rows("SELECT extra FROM items WHERE type='link' AND hidden=0 ORDER BY sort_order, id") as $lk) {
+            $u = trim((string)$lk['extra']);
+            if ($email === '' && str_starts_with($u, 'mailto:')) $email = substr($u, 7);
+            elseif ($phone === '' && preg_match('/wa\.me\/(\+?\d+)/', $u, $m)) $phone = $m[1];
+            elseif ($phone === '' && str_starts_with($u, 'tel:')) $phone = substr($u, 4);
+        }
+    }
     return [
-        'name' => $setL('name'), 'job' => $setL('title'), 'email' => '', 'phone' => '',
-        'location' => '', 'website' => site_origin(),
+        'name' => $setL('name'), 'job' => $setL('title'), 'email' => $email, 'phone' => $phone,
+        'location' => '', 'website' => $siteUrl,
         'summary' => $setL('bio'), 'experience' => implode("\n", $expLines),
         'education' => implode("\n", $eduLines), 'skills' => implode('، ', $skills),
         'projects' => implode("\n", $projs), 'languages' => $setL('spoken'), 'template' => 'modern',

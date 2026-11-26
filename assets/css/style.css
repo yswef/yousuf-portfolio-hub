@@ -98,7 +98,10 @@ html[dir=ltr] .mobile-drawer{transform:translateX(-100%)}.mobile-drawer.open{tra
 
 /* ---------- cards & grids ---------- */
 .about-grid,.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
-.about-text p{color:var(--muted);margin-bottom:18px;font-size:1.02rem}
+.about-text p{color:var(--muted);margin-bottom:18px;font-size:1.04rem;line-height:1.9}
+.about-profile-bar{display:flex;align-items:center;gap:16px;padding:16px 20px;margin-bottom:22px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.about-profile-bar img{width:64px;height:64px;border-radius:16px;object-fit:cover;border:2px solid var(--accent);flex:none}
+.about-profile-bar h3{margin:0 0 2px;font-size:1.15rem;color:var(--text)}
 .timeline-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
 .timeline-card h4{color:var(--accent-dark);margin-bottom:4px;font-size:.95rem}
 .timeline-card p{color:var(--muted);font-size:.92rem}.timeline-card+.timeline-card{margin-top:14px}.timeline-card.now{border-color:var(--accent);border-inline-start:4px solid var(--accent)}

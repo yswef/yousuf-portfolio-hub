@@ -197,24 +197,57 @@ return [
             audit('board_verify', $msg); flash($msg, $ok && $mapOk !== false);
             adm_back('boards', ['edit' => $id]);
         },
+        'import_from_apps' => function (): void {
+            if (!table_exists('apps')) { flash('وحدة التطبيقات غير مفعّلة.', false); adm_back('boards'); }
+            $added = 0; $now = time();
+            foreach (rows('SELECT a.*, p.html_url, p.topics FROM apps a LEFT JOIN projects p ON p.id=a.project_id WHERE a.ignored=0') as $a) {
+                if (row('SELECT id FROM boards WHERE LOWER(name)=LOWER(?)', [$a['name']])) continue;
+                $plat = strtolower((string)$a['platform']);
+                $type = str_contains($plat, 'android') || str_contains($plat, 'ios')
+                    ? (str_contains($plat, 'windows') ? 'both' : 'mobile')
+                    : (str_contains($plat, 'extension') ? 'browser_extension' : (str_contains($plat, 'bot') ? 'whatsapp_bot' : (str_contains($plat, 'windows') || str_contains($plat, 'desktop') ? 'desktop' : 'other')));
+                $dlTotal = (int)val('SELECT COALESCE(SUM(gh_count),0) FROM app_files WHERE app_id=?', [$a['id']]) + (table_exists('downloads') ? (int)val('SELECT COUNT(*) FROM downloads WHERE app_id=?', [$a['id']]) : 0);
+                ins('boards', [
+                    'slug' => unique_slug('boards', slugify($a['name'])), 'name' => $a['name'], 'app_type' => $type,
+                    'description' => (string)$a['description'], 'tags' => (string)($a['topics'] ?? ''),
+                    'github_url' => (string)($a['html_url'] ?? $a['release_url'] ?? ''), 'github_synced' => !empty($a['html_url']) ? 1 : 0,
+                    'app_version' => (string)$a['version'], 'version_uploaded' => $a['version'] !== '' && $a['version'] !== 'latest' ? 1 : 0,
+                    'status' => 'active', 'downloads_count' => $dlTotal, 'created' => $now, 'updated' => $now,
+                ]);
+                $added++;
+            }
+            audit('boards_import_apps', (string)$added);
+            flash($added > 0 ? "تم استيراد $added تطبيق إلى لوحات الإدارة." : 'جميع التطبيقات الحالية موجودة بالفعل كلوحات.');
+            adm_back('boards');
+        },
         'check_github' => function (): void {
             $id = PN('id'); $b = row('SELECT * FROM boards WHERE id=?', [$id]);
             if (!$b) adm_back('boards');
             $url = trim((string)($b['github_url'] ?? ''));
             if (!preg_match('#github\.com/([^/\s]+)/([^/\s]+)#i', $url, $m)) { flash('أدخل رابط مستودع GitHub صحيحاً أولاً واحفظه.', false); adm_back('boards', ['edit' => $id]); }
+            $owner = $m[1]; $repoName = (string)preg_replace('/\.git$/i', '', $m[2]);
             if (!function_exists('gh_get')) require_once modules_dir() . '/projects/github.php';
             try {
-                [$code, $body] = gh_get('/repos/' . rawurlencode($m[1]) . '/' . rawurlencode(rtrim($m[2], '.git')));
+                [$code, $body] = gh_get('/repos/' . rawurlencode($owner) . '/' . rawurlencode($repoName));
                 if ($code !== 200) { upd('boards', ['github_synced' => 2, 'updated' => time()], 'id=?', [$id]); flash('المستودع غير موجود أو غير قابل للوصول (HTTP ' . $code . ').', false); adm_back('boards', ['edit' => $id]); }
                 $repo = json_decode($body, true) ?: [];
-                $ver = ''; $uploaded = 0;
-                [$rc, $rbody] = gh_get('/repos/' . rawurlencode($m[1]) . '/' . rawurlencode(rtrim($m[2], '.git')) . '/releases/latest');
-                if ($rc === 200) { $rel = json_decode($rbody, true) ?: []; $ver = (string)($rel['tag_name'] ?? ''); $uploaded = $ver !== '' ? 1 : 0; }
-                $d = ['github_synced' => 1, 'version_uploaded' => $uploaded, 'updated' => time()];
-                if ($ver !== '' && trim((string)($b['app_version'] ?? '')) === '') $d['app_version'] = $ver;
+                [$rc, $rbody] = gh_get('/repos/' . rawurlencode($owner) . '/' . rawurlencode($repoName) . '/releases?per_page=10');
+                $rels = $rc === 200 ? (json_decode($rbody, true) ?: []) : [];
+                $rel = function_exists('pick_best_release') ? pick_best_release($rels) : ($rels[0] ?? null);
+                $ver = (string)($rel['tag_name'] ?? '');
+                $uploaded = !empty($rel['assets']) ? 1 : ($ver !== '' ? 1 : 0);
+                if ($ver === '') {
+                    [$tc, $tbody] = gh_get('/repos/' . rawurlencode($owner) . '/' . rawurlencode($repoName) . '/tags?per_page=3');
+                    $tags = $tc === 200 ? (json_decode($tbody, true) ?: []) : [];
+                    if (!empty($tags[0]['name'])) $ver = (string)$tags[0]['name'];
+                }
+                $ghDl = 0;
+                foreach ($rels as $rx) foreach ((array)($rx['assets'] ?? []) as $ax) $ghDl += (int)($ax['download_count'] ?? 0);
+                $d = ['github_synced' => 1, 'version_uploaded' => $uploaded, 'downloads_count' => max((int)$b['downloads_count'], $ghDl), 'updated' => time()];
+                if ($ver !== '') $d['app_version'] = $ver;
                 upd('boards', $d, 'id=?', [$id]);
                 audit('board_github_check', (string)$id);
-                flash('المستودع مزامن ✓ · آخر دفع: ' . (string)($repo['pushed_at'] ?? '') . ($ver !== '' ? ' · أحدث إصدار مرفوع: ' . $ver : ' · لا يوجد إصدار مرفوع'));
+                flash('المستودع مزامن ✓ · آخر دفع: ' . fmt_date($repo['pushed_at'] ?? '') . ($ver !== '' ? ' · الإصدار: ' . $ver : ''));
             } catch (Throwable $e) { flash('فشل فحص GitHub: ' . $e->getMessage(), false); }
             adm_back('boards', ['edit' => $id]);
         },
@@ -345,7 +378,7 @@ return [
 ];
 
 function boards_list(): void {
-    adm_h('لوحات الإدارة', 'كل تطبيق له لوحة تحكم تُدار من هنا: انسخ البرومت للموديل، أسقط ملف اللوحة، ثم أكمل البيانات.');
+    adm_h('لوحات الإدارة');
     $sort = array_key_exists((string)($_GET['sort'] ?? ''), BOARDS_SORTS) ? (string)$_GET['sort'] : 'newest';
     $q = trim((string)($_GET['q'] ?? ''));
     $fType = array_key_exists((string)($_GET['type'] ?? ''), BOARDS_TYPES) ? (string)$_GET['type'] : '';
@@ -354,8 +387,8 @@ function boards_list(): void {
     $allBoards = rows('SELECT * FROM boards');
     $where = '1=1'; $p = [];
     if ($q !== '') {
-        $where .= ' AND (name LIKE ? OR description LIKE ? OR tags LIKE ? OR gh_repo LIKE ?)';
-        $p = array_merge($p, ['%' . $q . '%', '%' . $q . '%', '%' . $q . '%', '%' . $q . '%']);
+        $where .= ' AND (name LIKE ? OR description LIKE ? OR tags LIKE ? OR search_tags LIKE ? OR github_url LIKE ?)';
+        $p = array_merge($p, ['%' . $q . '%', '%' . $q . '%', '%' . $q . '%', '%' . $q . '%', '%' . $q . '%']);
     }
     if ($fType !== '') { $where .= ' AND app_type=?'; $p[] = $fType; }
     if ($fStatus !== '') { $where .= ' AND status=?'; $p[] = $fStatus; }
@@ -363,6 +396,7 @@ function boards_list(): void {
 
     echo '<div class="boards-bar">';
     echo '<button type="button" class="btn" data-modal-open="newBoard">＋ لوحة جديدة</button>';
+    btn_post('boards', 'import_from_apps', [], '⚡ استيراد من التطبيقات', 'btn ghost');
     echo '<form method="get" class="inline" style="display:flex;gap:8px;align-items:center"><input type="hidden" name="m" value="boards">'
        . ($q !== '' ? '<input type="hidden" name="q" value="' . e($q) . '">' : '')
        . ($fType !== '' ? '<input type="hidden" name="type" value="' . e($fType) . '">' : '')
@@ -541,13 +575,21 @@ function boards_edit(int $id): void {
     echo '</div></div>';
 
     // ---- licenses ----
-    echo '<div class="panel"><h2>التراخيص (للتطبيقات المدفوعة)</h2>';
+    echo '<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">التراخيص والمفاتيح المرتبطة</h2><a class="btn ghost sm" href="' . e(adm_url('appkeys', ['board_id' => $id])) . '">🔑 توليد دفعة مفاتيح لهذا التطبيق</a></div>';
     $lics = rows('SELECT * FROM board_licenses WHERE board_id=? ORDER BY id DESC', [$id]);
-    if ($lics) { echo '<div class="tw"><table><thead><tr><th>الكود</th><th>البريد</th><th>الخطة</th><th>الحالة</th><th>الإنشاء</th><th>الانتهاء</th><th></th></tr></thead><tbody>';
-        foreach ($lics as $l) { echo '<tr><td dir="ltr"><code>' . e($l['code']) . '</code></td><td dir="ltr">' . e((string)$l['email']) . '</td><td>' . e((string)$l['plan']) . '</td><td>' . e((string)$l['status']) . '</td><td>' . e(fmt_date($l['created'])) . '</td><td>' . e($l['expires'] ? fmt_date($l['expires']) : '—') . '</td><td class="acts">';
-            btn_post('boards', 'license_delete', ['id' => $l['id'], 'board_id' => $id], 'حذف', 'btn danger sm', 'حذف هذا الترخيص؟'); echo '</td></tr>'; }
-        echo '</tbody></table></div>'; }
-    else echo '<p class="muted">لا تراخيص بعد.</p>';
+    $bulkKeys = table_exists('app_keys') ? rows('SELECT * FROM app_keys WHERE board_id=? ORDER BY id DESC LIMIT 50', [$id]) : [];
+    if ($lics || $bulkKeys) {
+        echo '<div class="tw"><table><thead><tr><th>الكود</th><th>النوع / الخطة</th><th>البريد</th><th>الحالة</th><th>الإنشاء</th><th>الانتهاء</th><th></th></tr></thead><tbody>';
+        foreach ($lics as $l) {
+            echo '<tr><td dir="ltr"><code>' . e($l['code']) . '</code></td><td>' . e((string)($l['plan'] ?: 'ترخيص')) . '</td><td dir="ltr">' . e((string)$l['email']) . '</td><td>' . e((string)$l['status']) . '</td><td>' . e(fmt_date($l['created'])) . '</td><td>' . e($l['expires'] ? fmt_date($l['expires']) : '—') . '</td><td class="acts">';
+            btn_post('boards', 'license_delete', ['id' => $l['id'], 'board_id' => $id], 'حذف', 'btn danger sm', 'حذف هذا الترخيص؟');
+            echo '</td></tr>';
+        }
+        foreach ($bulkKeys as $bk) {
+            echo '<tr><td dir="ltr"><code>' . e($bk['key_code']) . '</code></td><td>' . e(($bk['key_type'] ?? 'key') . ($bk['plan'] ? ' · ' . $bk['plan'] : '')) . '</td><td dir="ltr">' . e((string)$bk['email']) . '</td><td>' . e((string)$bk['status']) . '</td><td>' . e(fmt_date($bk['created'])) . '</td><td>' . e($bk['expires'] ? fmt_date($bk['expires']) : '—') . '</td><td class="acts"><a class="btn ghost sm" href="' . e(adm_url('appkeys', ['board_id' => $id])) . '">إدارة</a></td></tr>';
+        }
+        echo '</tbody></table></div>';
+    } else echo '<p class="muted">لا تراخيص أو مفاتيح مرتبطة بعد.</p>';
     f_open('boards', 'license_add', ['board_id' => $id], false, 'inline-form');
     f_in('code', 'الكود (اتركه فارغاً للتوليد)', '', 'text', 'dir="ltr"');
     f_in('email', 'بريد العميل', '', 'text', 'dir="ltr"');

@@ -65,7 +65,7 @@ function adm_head(string $cur): void {
 <main class="main">
 <?php if (!empty($_SESSION['flash'])): [$fm, $fo] = $_SESSION['flash']; unset($_SESSION['flash']); ?><div class="note <?= $fo ? 'ok' : 'bad' ?>"><?= e($fm) ?></div><?php endif;
 }
-function adm_foot(): void { echo '</main></div><script src="' . url('admin/assets/admin.js') . '?v=3" defer></script></body></html>'; }
+function adm_foot(): void { echo '</main></div><script src="' . url('admin/assets/admin.js') . '?v=4" defer></script></body></html>'; }
 function adm_h(string $t, string $sub = ''): void { echo '<header class="ph"><h1>' . e($t) . '</h1>' . ($sub !== '' ? '<p class="muted">' . e($sub) . '</p>' : '') . '</header>'; }
 
 /* ---------- form helpers ---------- */
@@ -90,8 +90,8 @@ function f_sel(string $name, string $label, array $opts, $cur): void {
 }
 /** Per-language field: user enters Arabic only (auto-translated on save); language tabs remain available for optional review/override. */
 function f_i18n(string $name, string $label, array $vals = [], bool $area = false, int $rows = 3): void {
-    echo '<div class="i18n"><div class="i18n-h"><span class="i18n-lbl">' . e($label) . ' <small class="muted">(أدخل العربية فقط — يُترجم تلقائياً)</small></span>'
-       . '<span class="tabs"><button type="button" class="tab auto-btn" data-autotranslate title="ترجمة فورية من العربية لكل اللغات">🌐 ترجمة تلقائية</button>';
+    echo '<div class="i18n"><div class="i18n-h"><span class="i18n-lbl">' . e($label) . '</span>'
+       . '<span class="tabs"><button type="button" class="tab auto-btn" data-autotranslate title="ترجمة فورية من العربية لكل اللغات">🌐 ترجمة</button>';
     $first = true;
     foreach (LANGS as $l => $info) {
         echo '<button type="button" class="tab' . ($first ? ' on' : '') . (trim((string)($vals[$l] ?? '')) !== '' ? ' has' : '') . '" data-lang="' . $l . '">' . strtoupper($l) . '</button>';
@@ -101,7 +101,7 @@ function f_i18n(string $name, string $label, array $vals = [], bool $area = fals
     foreach (LANGS as $l => $info) {
         echo '<div class="pane' . ($first ? ' on' : '') . '" data-lang="' . $l . '">';
         $v = e((string)($vals[$l] ?? ''));
-        $ph = $l === 'ar' ? ' placeholder="اكتب بالعربية هنا وسيتم ترجمة باقي اللغات تلقائياً…"' : ' placeholder="يُترجم تلقائياً من العربية عند الحفظ (أو عدّله يدوياً)"';
+        $ph = $l === 'ar' ? ' placeholder="النص بالعربية…"' : ' placeholder="يُترجم تلقائياً من العربية"';
         if ($area) echo '<textarea name="' . e($name) . '[' . $l . ']" rows="' . $rows . '" dir="' . $info['dir'] . '"' . $ph . '>' . $v . '</textarea>';
         else echo '<input name="' . e($name) . '[' . $l . ']" value="' . $v . '" dir="' . $info['dir'] . '"' . $ph . '>';
         echo '</div>'; $first = false;

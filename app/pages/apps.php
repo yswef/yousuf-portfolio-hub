@@ -16,7 +16,7 @@ $where = 'a.hidden=0 AND a.ignored=0'; $prm = [];
 if ($curPlat !== '') { $where .= ' AND a.platform=?'; $prm[] = $curPlat; }
 if ($curPrice !== '') { $where .= ' AND a.price_type=?'; $prm[] = $curPrice; }
 $orderSql = apps_order_sql($curSort);
-$list = rows("SELECT a.*, ((SELECT COALESCE(SUM(gh_count),0) FROM app_files f WHERE f.app_id=a.id AND f.hidden=0) + (SELECT COUNT(*) FROM downloads d WHERE d.app_id=a.id)) AS dl_total FROM apps a WHERE $where ORDER BY $orderSql", $prm);
+$list = rows("SELECT a.*, p.title_i18n AS p_title_i18n, p.desc_i18n AS p_desc_i18n, ((SELECT COALESCE(SUM(gh_count),0) FROM app_files f WHERE f.app_id=a.id AND f.hidden=0) + (SELECT COUNT(*) FROM downloads d WHERE d.app_id=a.id)) AS dl_total FROM apps a LEFT JOIN projects p ON p.id=a.project_id WHERE $where ORDER BY $orderSql", $prm);
 
 page_start(['title' => t('apps_title'), 'desc' => t('apps_sub')]);
 page_head(t('nav_apps'), t('apps_title'), t('apps_sub'));

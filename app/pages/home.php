@@ -5,7 +5,7 @@ $dl = (int)val('SELECT COALESCE(SUM(f.gh_count),0) FROM app_files f JOIN apps a 
 $projOrder = projects_order_sql();
 $appOrder = apps_order_sql();
 $featured = rows("SELECT * FROM projects WHERE hidden=0 AND featured=1 ORDER BY $projOrder LIMIT 6") ?: rows("SELECT * FROM projects WHERE hidden=0 ORDER BY $projOrder LIMIT 6");
-$apps = rows("SELECT a.*, ((SELECT COALESCE(SUM(gh_count),0) FROM app_files f WHERE f.app_id=a.id AND f.hidden=0) + (SELECT COUNT(*) FROM downloads d WHERE d.app_id=a.id)) AS dl_total FROM apps a WHERE a.hidden=0 AND a.ignored=0 ORDER BY $appOrder LIMIT 3");
+$apps = rows("SELECT a.*, p.title_i18n AS p_title_i18n, p.desc_i18n AS p_desc_i18n, ((SELECT COALESCE(SUM(gh_count),0) FROM app_files f WHERE f.app_id=a.id AND f.hidden=0) + (SELECT COUNT(*) FROM downloads d WHERE d.app_id=a.id)) AS dl_total FROM apps a LEFT JOIN projects p ON p.id=a.project_id WHERE a.hidden=0 AND a.ignored=0 ORDER BY $appOrder LIMIT 3");
 $name = setting_l('name'); $bd = setting('birthdate');
 $ld = ['@context' => 'https://schema.org', '@type' => 'Person', 'name' => $name, 'jobTitle' => setting_l('title'), 'url' => site_origin() . '/' . cur_lang() . '/', 'sameAs' => array_values(array_filter(array_map(fn($l) => safe_url((string)$l['extra']), items('link'))))];
 page_start(['title' => '', 'jsonld' => $ld]);
@@ -41,9 +41,12 @@ $parts = explode(' ', $name); $last = array_pop($parts);
 
 <section id="about"><div class="container about-grid">
   <div class="about-text reveal"><p class="eyebrow"><?= e(t('about_eyebrow')) ?></p><h2 class="section-title"><?= e(t('about_title')) ?></h2>
-    <?php $bio = preg_split('/\R\R/', setting_l('bio'))[0] ?? ''; ?><p><?= e($bio) ?></p><a class="btn btn-ghost" href="<?= lurl('about') ?>"><?= e(t('read_more')) ?></a></div>
+    <?php
+      $rawBio = setting_l('bio') ?: setting_l('tagline') ?: t('hero_tagline');
+      $bioFirst = preg_split('/(?:\r\n|\r|\n){2,}/u', trim($rawBio))[0] ?? '';
+    ?><div class="prose"><?= md($bioFirst) ?></div><a class="btn btn-ghost" href="<?= lurl('about') ?>"><?= e(t('read_more')) ?></a></div>
   <div class="reveal">
-    <div class="timeline-card"><h4><?= e(t('fact_role_label')) ?></h4><p><?= e(t('fact_role_value')) ?></p></div>
+    <div class="timeline-card"><h4><?= e(t('fact_role_label')) ?></h4><p><?= e(setting_l('title') ?: t('fact_role_value')) ?></p></div>
     <?php if (setting_l('spoken')): ?><div class="timeline-card"><h4><?= e(t('fact_lang_label')) ?></h4><p><?= e(setting_l('spoken')) ?></p></div><?php endif; ?>
     <div class="timeline-card"><h4><?= e(t('fact_status_label')) ?></h4><p><?= e(setting_l('availability') ?: t('fact_status_value')) ?></p></div>
   </div></div></section>

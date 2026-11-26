@@ -35,6 +35,13 @@ return [
         ['label' => 'نقرات تنزيل (7 أيام)', 'value' => (int)val('SELECT COUNT(*) FROM downloads WHERE ts>?', [time() - 7 * 86400])],
     ],
     'actions' => [
+        'discover_apps' => function (): void {
+            require_once modules_dir() . '/projects/github.php';
+            set_setting('apps_detect_source', (string)PB('apps_detect_source'));
+            [$ok, $sum] = sync_and_log(true);
+            audit('apps_discover', $sum);
+            flash(($ok ? 'اكتمل اكتشاف التطبيقات والإصدارات: ' : 'تنبيه أثناء المزامنة: ') . $sum, $ok);
+        },
         'save_display_sort' => function (): void {
             $s = array_key_exists(P('apps_sort'), APPS_PUBLIC_SORTS) ? P('apps_sort') : 'newest';
             set_setting('apps_sort', $s);
@@ -80,14 +87,22 @@ return [
         },
     ],
     'view' => function (array $mod): void {
-        adm_h('التطبيقات والتنزيلات', 'تظهر في صفحة التطبيقات. التنزيلات تُحتسب عبر رابط /dl/ داخل موقعك ثم يُحوَّل الزائر إلى الملف.');
+        adm_h('التطبيقات والتنزيلات');
         if (isset($_GET['edit'])) { apps_form((int)$_GET['edit']); return; }
 
         $curPubSort = setting('apps_sort', 'newest');
-        echo '<div class="panel"><h2>ترتيب عرض التطبيقات في الموقع</h2><p class="muted">حدّد الترتيب الافتراضي لبطاقات التطبيقات في الموقع العام (ويمكن للزائر أيضاً تغيير الترتيب أثناء التصفح).</p>';
+        $detectSrc = setting('apps_detect_source', '1') === '1';
+        echo '<div class="cols" style="margin-bottom:18px">';
+        echo '<div class="panel" style="margin-bottom:0"><h2>اكتشاف التطبيقات من GitHub</h2>';
+        f_open('apps', 'discover_apps');
+        f_chk('apps_detect_source', 'شمل مستودعات الأدوات والتطبيقات بلا Release ثنائي', $detectSrc);
+        echo '<button class="btn" type="submit">🔍 مزامنة واكتشاف التطبيقات</button></form></div>';
+
+        echo '<div class="panel" style="margin-bottom:0"><h2>ترتيب العرض في الموقع</h2>';
         f_open('apps', 'save_display_sort', [], false, 'inline-form');
-        f_sel('apps_sort', 'طريقة الترتيب الافتراضية', APPS_PUBLIC_SORTS, $curPubSort);
-        echo '<button class="btn ghost" type="submit">حفظ طريقة العرض</button></form></div>';
+        f_sel('apps_sort', 'الترتيب الافتراضي للزوار', APPS_PUBLIC_SORTS, $curPubSort);
+        echo '<button class="btn ghost" type="submit">حفظ</button></form></div>';
+        echo '</div>';
 
         // ---- filters ----
         $q = trim((string)($_GET['q'] ?? ''));

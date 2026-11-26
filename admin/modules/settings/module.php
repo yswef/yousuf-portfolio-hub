@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 const SET_I18N = [     // key => [label, textarea?]
     'name' => ['الاسم', false], 'title' => ['المسمّى الوظيفي', false], 'tagline' => ['الجملة التعريفية (الرئيسية)', true],
-    'bio' => ['نبذة عني (Markdown)', true], 'current_job' => ['العمل الحالي (يظهر في الرئيسية وصفحة عني)', false],
+    'bio' => ['نبذة عني — صفحة من أنا (Markdown)', true], 'current_job' => ['العمل الحالي (يظهر في الرئيسية وصفحة عني)', false],
     'focus' => ['كلمات الكتابة المتحركة (مفصولة بفاصلة)', false], 'availability' => ['نص التوفّر للمشاريع', false],
     'spoken' => ['اللغات التي أتحدثها', false], 'contact_text' => ['نص صفحة التواصل', true], 'banner' => ['شريط إعلان أعلى الموقع', false],
 ];
@@ -28,20 +28,25 @@ const SET_APPS_SORTS = [
     'name' => 'أبجدياً حسب الاسم',
     'oldest' => 'الأقدم إضافةً',
 ];
+const SET_TR_PROVIDERS = [
+    'auto' => 'ذكي تلقائي (Gemini AI إن وُجد مفتاح، وإلا Google Neural العصبي المجاني)',
+    'google' => 'Google Neural GTX (مجاني تماماً بدون مفتاح — سريع ودقيق)',
+    'gemini' => 'Gemini AI (ترجمة بالذكاء الاصطناعي — يتطلب مفتاح Gemini مجاني)',
+];
 
 return [
     'title' => ['ar' => 'الإعدادات', 'en' => 'Settings'], 'icon' => '⚙', 'group' => 'system', 'order' => 90, 'version' => 1,
     'seed' => function (): void {
         $v = [
             'name_ar' => 'يوسف الحمزي', 'name_en' => 'Yusef Alhmzy', 'name_es' => 'Yusef Alhmzy', 'name_fr' => 'Yusef Alhmzy', 'name_ja' => 'Yusef Alhmzy',
-            'bio_ar' => "مهندس برمجيات شغوف، متخصص في تطوير الأنظمة بلغة Python، ومواقع WordPress، وأنظمة ERP. مطوّر Python منذ نحو خمس سنوات، تعلّمت البرمجة ذاتياً وعملت في شركة ناشئة. أركّز على تطوير الويب، وأتمتة المهام، وتطبيقات سطح المكتب لويندوز، وأبني تطبيقات بديلة مجانية أو منخفضة التكلفة للبرامج المدفوعة.\n\nأتعلّم حالياً تطوير تطبيقات الموبايل والأمن السيبراني. أحب التحديات التقنية وأسعى دائماً لتعلّم أدوات جديدة والتطور في مسيرتي.",
-            'bio_en' => "A passionate software engineer specializing in Python systems, WordPress websites and ERP systems. A Python developer for about five years, self-taught, with experience in a startup. I focus on web development, task automation and Windows desktop apps, and I build free or low-cost alternatives to paid software.\n\nRight now I am learning mobile app development and cybersecurity. I love technical challenges and I am always learning new tools and growing in my career.",
+            'bio_ar' => "مهندس برمجيات شغوف ببناء الأدوات العملية والأنظمة المتكاملة، أمتلك خبرة تقنية تمتد لأكثر من **خمس سنوات** في التطوير بلغة **Python**، وبناء وتخصيص مواقع **WordPress**، وتطوير أنظمة **ERP**.\n\nانطلقت في مسيرتي البرمجية عبر التعلّم الذاتي المستمر والعمل الميداني في بيئة الشركات الناشئة، وأركّز اليوم على:\n- **تطبيقات سطح المكتب وأدوات الأتمتة** لنظام Windows بواجهات عصرية وأداء خفيف.\n- **تطبيقات أندرويد والويب** المصممة لحل مشكلات حقيقية وتبسيط المهام اليومية.\n- **بناء بدائل احترافية مفتوحة المصدر أو منخفضة التكلفة** تغني المستخدم عن البرامج المعقدة والمدفوعة.\n\nأعمل حالياً على التعمّق في **تطوير تطبيقات الموبايل والأمن السيبراني**، وأستمتع دائماً بخوض التحديات الهندسية وتعلّم كل تقنية تضيف قيمة حقيقية للمستخدم.",
+            'bio_en' => "A passionate software engineer building practical tools and complete systems, with over **five years** of hands-on experience in **Python**, **WordPress**, and **ERP** development.\n\nSelf-taught with startup engineering experience, my work focuses on:\n- **Windows desktop applications & automation tools** with clean, lightweight interfaces.\n- **Android & web applications** crafted to streamline everyday workflows.\n- **Free or affordable high-quality alternatives** to expensive proprietary software.\n\nCurrently expanding deeper into **mobile development and cybersecurity**, driven by technical challenges and continuous learning.",
             'current_job_ar' => 'أعمل حالياً في مطعم حنيذ.', 'current_job_en' => 'Currently working at Haneeth Restaurant.',
             'focus_ar' => 'Python, WordPress, ERP, أتمتة المهام', 'focus_en' => 'Python, WordPress, ERP, Automation',
             'availability_ar' => 'متاح لمشاريع جديدة', 'availability_en' => 'Available for new projects',
             'spoken_ar' => 'العربية، الإنجليزية', 'spoken_en' => 'Arabic, English',
             'contact_text_ar' => 'عندك فكرة مشروع أو تحتاج مساعدة؟ اكتب تفاصيل العمل المطلوب وأعود إليك.', 'contact_text_en' => 'Have a project idea or need help? Describe the work you need and I will get back to you.',
-            'birthdate' => '2006-06-26', 'theme_default' => 'system', 'projects_sort' => 'custom', 'apps_sort' => 'newest',
+            'birthdate' => '2006-06-26', 'theme_default' => 'system', 'projects_sort' => 'custom', 'apps_sort' => 'newest', 'translate_provider' => 'auto',
         ];
         foreach (array_keys(LANGS) as $l) {
             $f = lang_file($l);
@@ -68,8 +73,33 @@ return [
             }
             exit;
         },
+        'retranslate_all' => function (): void {
+            @set_time_limit(180);
+            $count = 0;
+            foreach (SET_I18N as $k => [$lab, $area]) {
+                $ar = trim(setting($k . '_ar'));
+                if ($ar === '') continue;
+                $vals = i18n_auto_fill(['ar' => $ar], [], true);
+                foreach ($vals as $l => $v) if ($l !== 'ar' && $v !== '') { set_setting($k . '_' . $l, (string)$v); $count++; }
+            }
+            if (table_exists('items')) {
+                foreach (rows('SELECT id, title_i18n, sub_i18n, text_i18n FROM items') as $it) {
+                    $u = [];
+                    foreach (['title_i18n', 'sub_i18n', 'text_i18n'] as $col) {
+                        if (!empty($it[$col])) $u[$col] = i18n_json_auto_fill((string)$it[$col], null, true);
+                    }
+                    if ($u) { upd('items', $u, 'id=?', [$it['id']]); $count++; }
+                }
+            }
+            audit('retranslate_all', (string)$count);
+            flash("تمت إعادة ترجمة وتحديث النصوص من العربية بالمحرك العصبي ($count حقل/عنصر).");
+        },
         'save' => function (): void {
-            foreach (SET_FLAGS as $k => $x) set_setting($k, (string)PB($k));   // save flags first so auto_translate_enabled() reflects current choice
+            foreach (SET_FLAGS as $k => $x) set_setting($k, (string)PB($k));
+            set_setting('translate_provider', array_key_exists(P('translate_provider'), SET_TR_PROVIDERS) ? P('translate_provider') : 'auto');
+            if (PB('gemini_key_remove')) set_setting('gemini_api_key', '');
+            elseif (P('gemini_api_key') !== '') set_setting('gemini_api_key', mb_substr(P('gemini_api_key'), 0, 200));
+
             foreach (SET_I18N as $k => [$lab, $area]) {
                 $vals = []; $oldVals = [];
                 foreach (array_keys(LANGS) as $l) {
@@ -96,14 +126,26 @@ return [
     ],
     'view' => function (array $mod): void {
         adm_h('الإعدادات');
+        echo '<div class="panel"><div class="row" style="justify-content:space-between"><div><h2 style="margin:0">محرك الترجمة العصبية</h2><p class="muted" style="margin:2px 0 0">Google Neural مجاناً مع حماية المصطلحات التقنية (أو Gemini AI عند إضافة مفتاح).</p></div>';
+        btn_post('settings', 'retranslate_all', [], '🔄 إعادة ترجمة كل النصوص من العربية', 'btn ghost sm', 'تحديث جميع الترجمات من النصوص العربية الحالية؟');
+        echo '</div></div>';
+
         f_open('settings', 'save', [], true, 'form');
-        echo '<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">الهوية والنصوص</h2><button type="button" class="btn ghost sm" data-autotranslate-all>🌐 ترجمة كل الحقول من العربية الآن</button></div>'
-           . '<p class="muted" style="margin-bottom:14px">اكتب بالعربية فقط — تُترجم باقي اللغات (EN / ES / FR / JA) تلقائياً عند الحفظ أو بالضغط على زر الترجمة الفورية.</p>';
+        echo '<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0">الهوية والنصوص</h2><button type="button" class="btn ghost sm" data-autotranslate-all>🌐 ترجمة كل الحقول الآن</button></div>';
         foreach (SET_I18N as $k => [$lab, $area]) {
             $vals = []; foreach (array_keys(LANGS) as $l) $vals[$l] = setting($k . '_' . $l);
             f_i18n('s_' . $k, $lab, $vals, $area, $k === 'bio' ? 8 : 3);
         }
-        echo '</div><div class="panel"><h2>الصورة الشخصية</h2>'; f_image('avatar', 'صورة جديدة (تُحوَّل إلى JPG)', setting('avatar') ?: null); echo '<p class="muted">إن لم ترفع صورة تُستخدم الصورة الافتراضية للموقع.</p></div>';
+        echo '</div>';
+
+        $gk = setting('gemini_api_key');
+        echo '<div class="panel"><h2>إعدادات محرك الترجمة</h2>';
+        f_sel('translate_provider', 'مزوّد الترجمة التلقائية', SET_TR_PROVIDERS, setting('translate_provider', 'auto'));
+        f_in('gemini_api_key', 'مفتاح Gemini API (اختياري — للترجمة بالذكاء الاصطناعي) — ' . ($gk !== '' ? 'مضبوط ••••' . substr($gk, -4) : 'غير مضبوط (يعمل Google Neural المجاني تلقائياً)'), '', 'password', 'dir="ltr" autocomplete="new-password"');
+        if ($gk !== '') f_chk('gemini_key_remove', 'حذف مفتاح Gemini المحفوظ', false);
+        echo '</div>';
+
+        echo '<div class="panel"><h2>الصورة الشخصية</h2>'; f_image('avatar', 'صورة جديدة (تُحوَّل إلى JPG)', setting('avatar') ?: null); echo '<p class="muted">إن لم ترفع صورة تُستخدم الصورة الافتراضية للموقع.</p></div>';
         echo '<div class="panel"><h2>العرض وترتيب القوائم</h2>';
         f_in('birthdate', 'تاريخ الميلاد (لحساب العمر فقط — لا يُعرض)', setting('birthdate'), 'text', 'dir="ltr" placeholder="YYYY-MM-DD"');
         f_sel('theme_default', 'المظهر الافتراضي', ['system' => 'حسب جهاز الزائر', 'dark' => 'داكن', 'light' => 'فاتح'], setting('theme_default', 'system'));
