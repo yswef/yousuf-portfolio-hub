@@ -6,6 +6,15 @@ if (!is_file(ROOT . '/config.php')) {
     if (is_file(ROOT . '/install.php')) redirect(url('install.php'));
     http_response_code(503); echo 'Not installed'; exit;
 }
+
+// Safe updater: while files are being replaced the whole public site answers with the branded
+// maintenance page (API callers get JSON 503) so nobody ever loads a half-updated tree.
+$__path = rawurldecode((string)(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/'));
+$__base = base();
+if ($__base !== '' && str_starts_with($__path, $__base)) $__path = substr($__path, strlen($__base));
+$__first = explode('/', trim($__path, '/'))[0] ?? '';
+update_guard_public($__first === 'api' ? 'api' : '');
+
 require ROOT . '/app/layout.php';
 require ROOT . '/app/parts.php';
 
@@ -65,9 +74,22 @@ try {
     $REST = '';
     require ROOT . '/app/pages/notfound.php';
 } catch (Throwable $e) {
+    // Always log; never show the exception (it contains absolute server paths and breaks the layout).
     error_log('[site] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-    if (!headers_sent()) http_response_code(500);
-    echo cfg('debug') ? '<pre>' . e((string)$e) . '</pre>' : '<!doctype html><meta charset="utf-8"><p style="font-family:sans-serif;padding:40px">Temporary error — please try again later.</p>';
+    if (!headers_sent()) { http_response_code(500); header('Content-Type: text/html; charset=utf-8'); }
+    if (function_exists('update_active') && update_active()) { update_guard_public($top === 'api' ? 'api' : ''); }
+    $detail = '';
+    if (cfg('debug') && function_exists('is_admin_viewer') && is_admin_viewer()) {
+        $detail = '<pre dir="ltr" style="white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;background:#0b1622;border:1px solid #1e3346;border-radius:12px;padding:14px;font-size:.78rem">'
+                . e(get_class($e) . ': ' . $e->getMessage() . '\n' . $e->getFile() . ':' . $e->getLine()) . '</pre>';
+    }
+    echo '<!doctype html><html lang="' . e(defined('LANG') && isset(LANGS[LANG]) ? LANG : DEFAULT_LANG) . '"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+       . '<title>خطأ مؤقت</title><body style="font-family:system-ui,Tahoma,sans-serif;background:#050b14;color:#e8f1f9;display:grid;place-items:center;min-height:100svh;margin:0;padding:24px;text-align:center;overflow-x:hidden">'
+       . '<div style="max-width:560px;width:100%"><div style="font-size:40px;margin-bottom:12px">🛠</div>'
+       . '<h2 style="margin:0 0 8px;font-size:1.1rem">خطأ مؤقت — تم تسجيله وسيُعالج</h2>'
+       . '<p style="color:#8fa9c3;font-size:.9rem;line-height:1.8">أعد تحميل الصفحة بعد قليل. إن استمر الخطأ فراجع لوحة التحكم ← فحص النظام.</p>'
+       . '<a href="' . e(url('')) . '" style="display:inline-block;margin-top:14px;padding:10px 22px;border-radius:12px;background:#2dd4bf;color:#04121a;font-weight:700;text-decoration:none">العودة للرئيسية</a>'
+       . $detail . '</div></body></html>';
 }
 
 /** First-party analytics: no IP stored; visitor id = daily-salted hash. */

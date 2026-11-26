@@ -6,6 +6,21 @@ declare(strict_types=1);
  * Modules live in admin/modules/<id>/module.php (see admin/MODULES.md).
  */
 define('ROOT', dirname(__DIR__));
+
+// An update is being applied (files are being replaced one by one): show the standalone progress
+// screen instead of booting the panel against a half-updated tree. It polls update_step.php and
+// returns here automatically — no data is read or written by this guard.
+$__updFile = ROOT . '/data/update/state.json';
+if (is_file($__updFile)) {
+    $__upd = json_decode((string)@file_get_contents($__updFile), true);
+    $__ph = is_array($__upd) ? (string)($__upd['phase'] ?? '') : '';
+    if (in_array($__ph, ['download', 'extract', 'plan', 'apply', 'verify'], true)) {
+        require __DIR__ . '/core/update_wait.php';
+        exit;
+    }
+}
+unset($__updFile, $__upd, $__ph);
+
 require ROOT . '/core/bootstrap.php';
 if (!is_file(ROOT . '/config.php')) redirect(url('install.php'));
 define('LANG', 'ar');                                   // the panel UI is Arabic / RTL
