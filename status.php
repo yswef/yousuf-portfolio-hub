@@ -69,6 +69,21 @@ if (is_file($log) && filesize($log) > 0) {
     }
 }
 
+// ?deep=1 → also syntax-check every PHP file so a truncated/partial upload is pinpointed.
+$broken = [];
+if (isset($_GET['deep'])) {
+    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($ROOT, FilesystemIterator::SKIP_DOTS));
+    $n = 0;
+    foreach ($it as $f) {
+        $p = $f->getPathname();
+        if (!$f->isFile() || substr($p, -4) !== '.php') continue;
+        if (str_contains($p, '/data/') || str_contains($p, '/vendor/') || str_contains($p, '/node_modules/')) continue;
+        if (++$n > 1200) break;
+        try { token_get_all((string)file_get_contents($p), TOKEN_PARSE); }
+        catch (Throwable $e) { $broken[] = substr($p, strlen($ROOT) + 1) . ':' . $e->getLine(); }
+    }
+}
+
 $writable = is_writable($ROOT . '/data');
 
 $out = [
@@ -78,11 +93,13 @@ $out = [
     'db'        => $db,
     'data_writable' => $writable,
     'update_phase'  => $phase,
+    'broken_php'    => $broken,
     'last_error'    => $err['type'] === '' ? null : ['type' => $err['type'], 'at' => $err['at'], 'hash' => $err['hash']],
-    'hint'      => $missing ? 'ارفع الملفات الناقصة أعلاه عبر مدير الملفات ثم أعد المحاولة.'
+    'hint'      => $broken ? 'ملفات PHP تالفة/مقطوعة أثناء الرفع — أعد رفعها (تظهر أعلاه).'
+                : ($missing ? 'ارفع الملفات الناقصة أعلاه عبر مدير الملفات ثم أعد المحاولة.'
                 : ($db === 'fail' ? 'قاعدة البيانات لا تستجيب — تحقق من بيانات config.php في hPanel.'
                 : ($err['type'] !== '' ? 'يوجد خطأ PHP مسجّل — راجع data/php-error.log أو أرسل بصمة الخطأ للمطوّر.'
-                : 'كل شيء سليم.')),
+                : 'كل شيء سليم.'))),
 ];
 
 $key = (string)($_GET['key'] ?? '');
@@ -121,7 +138,8 @@ a{color:#2dd4bf;text-decoration:none;font-size:.85rem}
   <div class="row"><span>مجلد data</span><span class="v <?= $writable ? 'ok' : 'bad' ?>"><?= $writable ? 'قابل للكتابة' : 'غير قابل للكتابة' ?></span></div>
   <div class="row"><span>حالة التحديث</span><span class="v"><?= htmlspecialchars($phase, ENT_QUOTES) ?></span></div>
   <div class="row"><span>آخر خطأ</span><span class="v <?= $err['type'] ? 'bad' : 'ok' ?>"><?= $err['type'] ? htmlspecialchars($err['type'] . ' — ' . $err['at'], ENT_QUOTES) : 'لا يوجد' ?></span></div>
+  <?php if ($broken): ?><h2 style="font-size:.95rem;margin:16px 0 6px">ملفات تالفة:</h2><ul><?php foreach ($broken as $bf) echo '<li><code>' . htmlspecialchars($bf, ENT_QUOTES) . '</code></li>'; ?></ul><?php endif; ?>
   <?php if ($missing): ?><h2 style="font-size:.95rem;margin:16px 0 6px">ملفات يجب رفعها:</h2><ul><?php foreach ($missing as $mf) echo '<li><code>' . htmlspecialchars($mf, ENT_QUOTES) . '</code></li>'; ?></ul><?php endif; ?>
   <p style="color:#8fa9c3;font-size:.84rem;line-height:1.9;margin:14px 0 0"><?= htmlspecialchars($out['hint'], ENT_QUOTES) ?></p>
-  <p style="margin:14px 0 0"><a href="?json=1">JSON</a> · <a href="admin/">لوحة التحكم</a> · <a href="./">الموقع</a></p>
+  <p style="margin:14px 0 0"><a href="?json=1">JSON</a> · <a href="?deep=1">فحص الصياغة</a> · <a href="admin/">لوحة التحكم</a> · <a href="./">الموقع</a></p>
 </div></body></html>
