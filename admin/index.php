@@ -7,6 +7,13 @@ declare(strict_types=1);
  */
 define('ROOT', dirname(__DIR__));
 
+// Open the admin session BEFORE the core is loaded, so the fatal-error screen can tell a signed-in
+// admin exactly what broke (visitors never see details).
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    @session_name('ysid_admin');
+    @session_start();
+}
+
 // An update is being applied (files are being replaced one by one): show the standalone progress
 // screen instead of booting the panel against a half-updated tree. It polls update_step.php and
 // returns here automatically — no data is read or written by this guard.
@@ -14,7 +21,7 @@ $__updFile = ROOT . '/data/update/state.json';
 if (is_file($__updFile)) {
     $__upd = json_decode((string)@file_get_contents($__updFile), true);
     $__ph = is_array($__upd) ? (string)($__upd['phase'] ?? '') : '';
-    if (in_array($__ph, ['download', 'extract', 'plan', 'apply', 'verify'], true)) {
+    if (in_array($__ph, ['download', 'extract', 'plan', 'apply', 'verify'], true) && is_file(__DIR__ . '/core/update_wait.php')) {
         require __DIR__ . '/core/update_wait.php';
         exit;
     }
@@ -35,6 +42,11 @@ $nx = (string)($_GET['next'] ?? '');   // return-to after login: same-site paths
 if ($nx !== '' && $nx[0] === '/' && !str_starts_with($nx, '//') && !preg_match('/[\\\r\n]/', $nx)) $_SESSION['next'] = $nx;
 if (!admin_gate()) exit;                                // login / 2FA screens handled inside (exit when not authenticated)
 
+/**
+ * Rescue wrapper: whatever throws afterwards (a broken module, a missing helper, a bad migration)
+ * is shown to the signed-in admin as a readable page with the fix — the panel never dies silently.
+ */
+try {
 try { migrate_all(); } catch (Throwable $e) { adm_fatal('Migration failed: ' . $e->getMessage()); }
 team_ensure_primary();
 team_session_guard();
@@ -86,3 +98,20 @@ else {
     else echo '<div class="note bad">هذه الوحدة لا تحتوي على واجهة (view).</div>';
 }
 adm_foot();
+} catch (Throwable $e) {
+    error_log('[admin] ' . get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    if (!headers_sent()) { http_response_code(500); header('Content-Type: text/html; charset=utf-8'); header('Cache-Control: no-store'); }
+    $msg = e($e->getMessage());
+    $where = e(basename($e->getFile()) . ':' . $e->getLine());
+    echo '<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+       . '<title>خطأ في لوحة التحكم</title><body style="margin:0;background:#050b14;color:#e8f1f9;font-family:system-ui,Tahoma,sans-serif;padding:22px;max-width:100%;overflow-x:hidden">'
+       . '<div style="max-width:620px;margin:6vh auto;background:#0a1626;border:1px solid #1b324e;border-radius:16px;padding:22px">'
+       . '<h2 style="margin:0 0 8px;font-size:1.05rem">تعذّر تحميل هذه الصفحة — الخطأ مسجَّل في data/php-error.log</h2>'
+       . '<p style="color:#8fa9c3;font-size:.86rem;line-height:1.9;margin:0 0 12px">بقية الموقع يعمل. جرّب الصفحة الرئيسية للوحة، وإن تكرر الخطأ أرسل السطر التالي للمطوّر.</p>'
+       . '<pre dir="ltr" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0b1622;border:1px solid #1e3346;border-radius:12px;padding:12px;font-size:.78rem">'
+       . $msg . "\n" . $where . '</pre>'
+       . '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">'
+       . '<a href="' . e(adm_url('dashboard')) . '" style="background:#2dd4bf;color:#04121a;font-weight:700;padding:9px 18px;border-radius:10px;text-decoration:none">⌂ الرئيسية</a>'
+       . '<a href="' . e(url('')) . '" style="color:#2dd4bf;padding:9px 0;text-decoration:none;font-size:.85rem">↗ الموقع</a></div>'
+       . '</div></body></html>';
+}
