@@ -68,7 +68,7 @@ function adm_head(string $cur): void {
 </aside>
 <main class="main">
 <?php if (!empty($_SESSION['flash'])): [$fm, $fo] = $_SESSION['flash']; unset($_SESSION['flash']); ?><div class="note <?= $fo ? 'ok' : 'bad' ?>"><?= e($fm) ?></div><?php endif;
-    echo update_admin_overlay();
+    if (function_exists('update_admin_overlay')) echo update_admin_overlay();
 }
 function adm_foot(): void { echo '</main></div><script src="' . url('admin/assets/admin.js') . '?v=5" defer></script></body></html>'; }
 function adm_h(string $t, string $sub = ''): void { echo '<header class="ph"><h1>' . e($t) . '</h1>' . ($sub !== '' ? '<p class="muted">' . e($sub) . '</p>' : '') . '</header>'; }

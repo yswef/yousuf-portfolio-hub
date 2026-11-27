@@ -13,7 +13,7 @@ $__path = rawurldecode((string)(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_UR
 $__base = base();
 if ($__base !== '' && str_starts_with($__path, $__base)) $__path = substr($__path, strlen($__base));
 $__first = explode('/', trim($__path, '/'))[0] ?? '';
-update_guard_public($__first === 'api' ? 'api' : '');
+if (function_exists('update_guard_public')) update_guard_public($__first === 'api' ? 'api' : '');
 
 require ROOT . '/app/layout.php';
 require ROOT . '/app/parts.php';

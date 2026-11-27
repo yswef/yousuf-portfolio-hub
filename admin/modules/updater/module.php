@@ -2,9 +2,26 @@
 declare(strict_types=1);
 require_once __DIR__ . '/lib.php';
 
+// The engine lives in core/update.php. If it is missing (partial upload) this module must degrade
+// gracefully instead of throwing "undefined function" and blanking the panel.
+if (!function_exists('update_state_read')) {
+    return [
+        'title' => ['ar' => 'تحديث الموقع', 'en' => 'Site updater'], 'icon' => '🔄', 'group' => 'system', 'order' => 96, 'version' => 2,
+        'view' => function (array $mod): void {
+            adm_h('تحديث الموقع');
+            echo '<div class="note bad">محرّك التحديث غير مكتمل على السيرفر: الملف <code>core/update.php</code> مفقود.</div>';
+            echo '<div class="panel"><h2>كيف تُصلحها</h2><ol class="muted" style="line-height:2;padding-inline-start:18px">'
+               . '<li>افتح مدير الملفات في hPanel ← <code>public_html/core/</code> وتأكد من وجود <code>update.php</code>.</li>'
+               . '<li>أو افتح <a href="' . e(url('status.php')) . '">status.php</a> لرؤية كل الملفات الناقصة.</li>'
+               . '<li>أعد رفع الملف الناقص فقط — بياناتك و<code>config.php</code> لا تحتاج إعادة رفع.</li></ol></div>';
+        },
+    ];
+}
+
 return [
     'title' => ['ar' => 'تحديث الموقع', 'en' => 'Site updater'], 'icon' => '🔄', 'group' => 'system', 'order' => 96, 'version' => 2,
     'widgets' => function (): array {
+        if (!function_exists('update_last_applied_manifest')) return [];
         $m = update_last_applied_manifest();
         $st = update_state_read();
         if ($st && update_active($st)) return [['label' => 'حالة التحديث', 'value' => update_percent($st) . '%', 'link' => 'updater']];
